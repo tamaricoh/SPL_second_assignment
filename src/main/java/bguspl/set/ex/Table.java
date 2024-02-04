@@ -95,6 +95,8 @@ public class Table {
         slotToCard[slot] = card;
 
         // TODO implement
+        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // unsert the given card to the picked slot
     }
 
     /**
@@ -107,6 +109,8 @@ public class Table {
         } catch (InterruptedException ignored) {}
 
         // TODO implement
+        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // remove the card from the slot
     }
 
     /**
@@ -116,6 +120,9 @@ public class Table {
      */
     public void placeToken(int player, int slot) {
         // TODO implement
+        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // i think we suppose to mark the card? 
+        // every player palce at most 3 tokens. after the third one, he asks the dealer to check it.
     }
 
     /**
@@ -126,6 +133,9 @@ public class Table {
      */
     public boolean removeToken(int player, int slot) {
         // TODO implement
+        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // remove the players mark from this slot (out of queue??)
+        // return true if succeeded 
         return false;
     }
 }

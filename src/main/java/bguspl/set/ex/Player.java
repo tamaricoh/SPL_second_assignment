@@ -77,6 +77,11 @@ public class Player implements Runnable {
 
         while (!terminate) {
             // TODO implement main player loop
+            // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // tries to find a set
+            // send to the dealer right after the thired card got picked
+            // if the set is legel - update the score.
+            // check for panelty???
         }
         if (!human) try { aiThread.join(); } catch (InterruptedException ignored) {}
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
@@ -92,6 +97,13 @@ public class Player implements Runnable {
             env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
             while (!terminate) {
                 // TODO implement player key press simulator
+                // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                // simulate the keyboard clicking
+                // chose 3 cards from the table, randomly (its actually chose 3 slots from the table)
+
+                // The player thread consumes the actions from the queue, placing or removing a token in the corresponding slot in the grid on the table.
+                // Once the player places his third token on the table, he must notify the dealer and wait until the dealer checks if it is a legal set or not. The dealer then gives him either a point or a penalty accordingly.
+
                 try {
                     synchronized (this) { wait(); }
                 } catch (InterruptedException ignored) {}
@@ -106,6 +118,16 @@ public class Player implements Runnable {
      */
     public void terminate() {
         // TODO implement
+        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        /**
+         * When the user clicks the close window button, the class WindowManager that we provided you
+         * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
+         * method for each opened player thread. 
+         */
+        /**
+         * +2 points will be awarded for terminating all threads (that you created) gracefully and
+         * in reverse order to the order they were created in.
+         */
     }
 
     /**
@@ -115,6 +137,9 @@ public class Player implements Runnable {
      */
     public void keyPressed(int slot) {
         // TODO implement
+        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // what happened when we click on the keyboard? 
+        // insert the picekd card to the queue
     }
 
     /**
@@ -125,6 +150,9 @@ public class Player implements Runnable {
      */
     public void point() {
         // TODO implement
+        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // score++;
+        // wait one second
 
         int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
@@ -135,6 +163,8 @@ public class Player implements Runnable {
      */
     public void penalty() {
         // TODO implement
+        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // wait some seconds
     }
 
     public int score() {
