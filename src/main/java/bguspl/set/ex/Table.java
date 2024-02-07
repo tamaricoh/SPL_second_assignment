@@ -107,10 +107,12 @@ public class Table {
         try {
             Thread.sleep(env.config.tableDelayMillis);
         } catch (InterruptedException ignored) {}
-
         // TODO implement
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // remove the card from the slot
+        int card  = slotToCard[slot];
+        cardToSlot[card] = null;
+        slotToCard[slot] = null;
+        // UI should update -and not show cards
     }
 
     /**
