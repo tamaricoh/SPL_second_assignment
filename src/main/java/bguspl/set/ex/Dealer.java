@@ -37,6 +37,7 @@ public class Dealer implements Runnable {
      */
     private long reshuffleTime = Long.MAX_VALUE;
 
+
     public Dealer(Env env, Table table, Player[] players) {
         this.env = env;
         this.table = table;
@@ -132,6 +133,10 @@ public class Dealer implements Runnable {
     private void removeAllCardsFromTable() {
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // Collecting the cards back from the table when needed
+        for ( int slot : table.cardToSlot){
+            deck.add(table.slotToCard[slot]);
+            table.removeCard(slot);
+        }
     }
 
     /**
