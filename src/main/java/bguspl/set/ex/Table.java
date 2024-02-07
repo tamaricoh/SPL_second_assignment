@@ -29,6 +29,13 @@ public class Table {
      */
     protected final Integer[] cardToSlot; // slot per card (if any)
 
+
+    // tokens
+    private int[] firstPlayerTokens = new int[]{-1, -1, -1};
+    private int tokensPlacedByFirst = 0;
+    private int[] secondPlayerTokens = new int[]{-1, -1, -1};
+    private int tokensPlacedBySecond = 0;
+
     /**
      * Constructor for testing.
      *
@@ -123,6 +130,26 @@ public class Table {
     public void placeToken(int player, int slot) {
         // TODO implement
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        
+        int card = slotToCard[slot];
+        if (player == 1){
+            for (int i = 0 ; i < firstPlayerTokens.length ; i++){
+                if (firstPlayerTokens[i] == -1){
+                    firstPlayerTokens[i] = card;
+                    tokensPlacedByFirst++;
+                    break;
+                }
+            }
+            return;
+        }
+        for (int i = 0 ; i < secondPlayerTokens.length ; i++){
+            if (secondPlayerTokens[i] == -1){
+                secondPlayerTokens[i] = card;
+                tokensPlacedBySecond++;
+                break;
+            }
+        }
+
         // i think we suppose to mark the card? 
         // every player palce at most 3 tokens. after the third one, he asks the dealer to check it.
     }
@@ -138,6 +165,24 @@ public class Table {
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // remove the players mark from this slot (out of queue??)
         // return true if succeeded 
+        int card = slotToCard[slot];
+        if (player == 1){
+            for (int i = 0 ; i < firstPlayerTokens.length ; i++){
+                if (firstPlayerTokens[i] == card){
+                    firstPlayerTokens[i] = -1;
+                    tokensPlacedByFirst--;
+                    return true;
+                }
+            }
+            return false;
+        }
+        for (int i = 0 ; i < secondPlayerTokens.length ; i++){
+            if (secondPlayerTokens[i] == card){
+                secondPlayerTokens[i] = -1;
+                tokensPlacedBySecond--;
+                return true;
+            }
+        }
         return false;
     }
 }
