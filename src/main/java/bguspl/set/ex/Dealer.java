@@ -118,6 +118,7 @@ public class Dealer implements Runnable {
         for (int i = 0 ; i < size && table.countCards() < env.config.tableSize ; i++){
             int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
             table.placeCard(deck.get(i), avaliableSlot);
+            deck.remove(i);
         }
         
         
