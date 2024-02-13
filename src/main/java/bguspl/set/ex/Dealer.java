@@ -100,6 +100,14 @@ public class Dealer implements Runnable {
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // probably calling - Table.java removeCard func to each card
         // check - if the set is correct - remove the cards
+        for (int i = 0 ; i < env.config.tableSize ; i++){
+            Integer card = table.slotToCard[i];
+            if (card != null){ // do we need this?
+                table.removeCard(i);
+                deck.add(card);
+            } 
+        }
+
     }
 
     /**
