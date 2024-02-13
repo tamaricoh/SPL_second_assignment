@@ -37,7 +37,6 @@ public class Dealer implements Runnable {
      */
     private long reshuffleTime = Long.MAX_VALUE;
 
-
     public Dealer(Env env, Table table, Player[] players) {
         this.env = env;
         this.table = table;
