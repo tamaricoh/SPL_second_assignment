@@ -171,6 +171,7 @@ public class Player implements Runnable {
         int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
         try {
+            env.ui.setFreeze(id, env.config.pointFreezeMillis);
             Thread.sleep(env.config.pointFreezeMillis); // sleeps for 1 sec
         } catch (InterruptedException e) {}
     }
@@ -181,6 +182,7 @@ public class Player implements Runnable {
     public void penalty() {
         removeTokens();
         try {
+            env.ui.setFreeze(id, env.config.penaltyFreezeMillis);
             Thread.sleep(env.config.penaltyFreezeMillis); // sleep for 3 seconds
         } catch (InterruptedException e) {}
     }
