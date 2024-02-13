@@ -2,7 +2,7 @@ package bguspl.set.ex;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
-
+import java.util.Iterator;
 import bguspl.set.Env;
 
 /**
@@ -146,13 +146,18 @@ public class Player implements Runnable {
      * @param slot - the slot corresponding to the key pressed.
      */
     public void keyPressed(int slot) {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // what happened when we click on the keyboard? 
-        // insert the picekd card to the queue
-
-        //what should happen? - push token selected to player qoeue , we call place token in the table,
-        //we check if queoe is full and if so call the dealer the see if it's a good set
+        Iterator<Integer> iter = queuePlayerTokens.iterator();
+        Boolean toRemove = false;
+        while(iter.hasNext()){                  // check if the slot was chosen already and remove it if so
+            if(iter.next() == slot) {
+                table.removeToken(id, slot);
+                toRemove = true;
+            }
+        }
+        if(!toRemove & queuePlayerTokens.size() < 3){   //if it's a new slot then add it to the table
+            queuePlayerTokens.add(slot);
+            table.placeToken(id, slot);
+        }
     }
 
     /**
@@ -162,15 +167,11 @@ public class Player implements Runnable {
      * @post - the player's score is updated in the ui.
      */
     public void point() {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // score++;
-        // wait one second
-        removeTokens();
+        removeTokens(); 
         int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
-        try {                   // wait some seconds
-            Thread.sleep(env.config.pointFreezeMillis); // 
+        try {
+            Thread.sleep(env.config.pointFreezeMillis); // sleeps for 1 sec
         } catch (InterruptedException e) {}
     }
 
@@ -178,11 +179,9 @@ public class Player implements Runnable {
      * Penalize a player and perform other related actions.
      */
     public void penalty() {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         removeTokens();
-        try {                   // wait some seconds
-            Thread.sleep(env.config.penaltyFreezeMillis); // 
+        try {
+            Thread.sleep(env.config.penaltyFreezeMillis); // sleep for 3 seconds
         } catch (InterruptedException e) {}
     }
 
@@ -192,6 +191,9 @@ public class Player implements Runnable {
 
     /**
      * removes the player tokens and empties the queue.
+     * 
+     * @post - the tables doesn't display the player tokens
+     * @post - queuePlayerTokens is empty
      */
     private void removeTokens(){
         while(!queuePlayerTokens.isEmpty()){
@@ -199,5 +201,4 @@ public class Player implements Runnable {
             table.removeToken(id, slot);
         }
     }
-
 }
