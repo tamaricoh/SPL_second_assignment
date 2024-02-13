@@ -159,6 +159,29 @@ public class Dealer implements Runnable {
      */
     private void announceWinners() {
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        int maxScore = Integer.MIN_VALUE;
+        for (Player player : players){
+            if (player.score() > maxScore){
+                maxScore = player.score();
+            }
+        }
+        int winnersCount = 0;
+        for (Player player : players){
+            if (player.score() == maxScore){
+                winnersCount++;
+            }
+        }
+
+        int [] winners = new int [winnersCount];
+        int i = 0;
+        for (Player player : players){
+            if (player.score() == maxScore){
+                winners[i] = player.id;
+                i++;
+            }
+        }
+        env.ui.announceWinner(winners);
+
         // does this terminate the game without closing the window??????
     }
 
