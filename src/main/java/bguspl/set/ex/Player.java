@@ -1,5 +1,8 @@
 package bguspl.set.ex;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
+
 import bguspl.set.Env;
 
 /**
@@ -51,6 +54,12 @@ public class Player implements Runnable {
     private int score;
 
     /**
+     * The queue keeping  the key presses that a player did.
+     */
+
+     Queue<Integer> queuePlayerTokens;
+    
+     /**
      * The class constructor.
      *
      * @param env    - the environment object.
@@ -64,6 +73,7 @@ public class Player implements Runnable {
         this.table = table;
         this.id = id;
         this.human = human;
+        queuePlayerTokens = new ArrayDeque<>(3);
     }
 
     /**
@@ -140,6 +150,9 @@ public class Player implements Runnable {
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // what happened when we click on the keyboard? 
         // insert the picekd card to the queue
+
+        //what should happen? - push token selected to player qoeue , we call place token in the table,
+        //we check if queoe is full and if so call the dealer the see if it's a good set
     }
 
     /**
@@ -153,9 +166,12 @@ public class Player implements Runnable {
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // score++;
         // wait one second
-
+        removeTokens();
         int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
+        try {                   // wait some seconds
+            Thread.sleep(env.config.pointFreezeMillis); // 
+        } catch (InterruptedException e) {}
     }
 
     /**
@@ -164,10 +180,24 @@ public class Player implements Runnable {
     public void penalty() {
         // TODO implement
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // wait some seconds
+        removeTokens();
+        try {                   // wait some seconds
+            Thread.sleep(env.config.penaltyFreezeMillis); // 
+        } catch (InterruptedException e) {}
     }
 
     public int score() {
         return score;
     }
+
+    /**
+     * removes the player tokens and empties the queue.
+     */
+    private void removeTokens(){
+        while(!queuePlayerTokens.isEmpty()){
+            int slot = (int) queuePlayerTokens.remove();
+            table.removeToken(id, slot);
+        }
+    }
+
 }
