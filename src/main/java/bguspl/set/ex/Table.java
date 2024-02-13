@@ -2,9 +2,11 @@ package bguspl.set.ex;
 
 import bguspl.set.Env;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +30,15 @@ public class Table {
      * Mapping between a card and the slot it is in (null if none).
      */
     protected final Integer[] cardToSlot; // slot per card (if any)
+
+
+    // tokens
+    Queue<Integer> queueFirstPlayerTokens = new ArrayDeque<>(3);
+    Queue<Integer> queueSecondPlayerTokens = new ArrayDeque<>(3);
+    // private int[] firstPlayerTokens = new int[]{-1, -1, -1};
+    // private int tokensPlacedByFirst = 0;
+    // private int[] secondPlayerTokens = new int[]{-1, -1, -1};
+    // private int tokensPlacedBySecond = 0;
 
     /**
      * Constructor for testing.
@@ -123,6 +134,15 @@ public class Table {
     public void placeToken(int player, int slot) {
         // TODO implement
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        
+        int card = slotToCard[slot];
+        if (player == 1){
+            queueFirstPlayerTokens.offer(card);
+            return;
+        }
+        queueSecondPlayerTokens.offer(card);
+        
+    
         // i think we suppose to mark the card? 
         // every player palce at most 3 tokens. after the third one, he asks the dealer to check it.
     }
@@ -138,6 +158,21 @@ public class Table {
         // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // remove the players mark from this slot (out of queue??)
         // return true if succeeded 
+        int card = slotToCard[slot];
+        int lastToken;
+        if (player == 1){
+            lastToken = queueFirstPlayerTokens.peek();
+            if (lastToken == card){
+                queueFirstPlayerTokens.poll();
+                return true;
+            }
+            return false;
+        }
+        lastToken = queueSecondPlayerTokens.peek();
+        if (lastToken == card){
+            queueSecondPlayerTokens.poll();
+            return true;
+        }
         return false;
     }
 }
