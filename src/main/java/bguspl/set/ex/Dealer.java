@@ -1,10 +1,12 @@
 package bguspl.set.ex;
 
 import bguspl.set.Env;
-
+import java.util.Queue;
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.Iterator;
 
 /**
  * This class manages the dealer's threads and data
@@ -21,6 +23,7 @@ public class Dealer implements Runnable {
      */
     private final Table table;
     private final Player[] players;
+    private ArrayDeque<Integer> checkIfSet; // player that want the dealer to check its set will push its id to here.
 
     /**
      * The list of card ids that are left in the dealer's deck.
@@ -42,6 +45,7 @@ public class Dealer implements Runnable {
         this.table = table;
         this.players = players;
         deck = IntStream.range(0, env.config.deckSize).boxed().collect(Collectors.toList());
+        this.checkIfSet = new ArrayDeque<Integer>();
     }
 
     /**
@@ -98,14 +102,34 @@ public class Dealer implements Runnable {
      */
     private void removeCardsFromTable() {
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // probably calling - Table.java removeCard func to each card
-        // check - if the set is correct - remove the cards
-        for (int i = 0 ; i < env.config.tableSize ; i++){
-            Integer card = table.slotToCard[i];
-            if (card != null){ // do we need this?
-                table.removeCard(i);
-                deck.add(card);
-            } 
+        // assuming queuePlayerTokens has slots nums
+        synchronized (table) {
+            Iterator<Integer> iterator = checkIfSet.iterator();
+            while (iterator.hasNext()) {
+                Integer playerId = iterator.next();
+                for (int i = 0 ; i < players.length ; i++){
+                    if (players[i].id == playerId){
+                        Player player = players[i];
+                        // check if player.queuePlayerTokens is a set using env.util.testSet
+                        int [] cards = new int[player.queuePlayerTokens.size()]; // size() = 3
+                        int j = 0;
+                        for (Integer slot : player.queuePlayerTokens){ // create array of the cards
+                            cards[j] = table.slotToCard[slot];
+                            j++;
+                        }
+                        boolean giveScore = env.util.testSet(cards); // check if its a set
+                        if (giveScore == true){ // if yes, add point and remove cards
+                            player.point();
+                            for (int card : cards){
+                                table.removeCard(table.cardToSlot[card]);
+                            }
+                        }
+                        if (giveScore == false){ // if no, give panelty
+                            player.penalty();
+                        }
+                    }
+                }
+            }
         }
 
     }
@@ -114,25 +138,15 @@ public class Dealer implements Runnable {
      * Check if any cards can be removed from the deck and placed on the table.
      */
     private void placeCardsOnTable() {
-        // int cards = table.countCards();
-        // // int avaliableSlot = table.avaliableSlot();
-        // if (avaliableSlot != -1){
-        //     int size = Math.min(deck.size(), env.config.tableSize);
-        //     for (int i = 0 ; i < size ; i++){
-        //         table.placeCard(deck.get(i), avaliableSlot);
-        //     }
-        // }
-        int size = Math.min(deck.size(), env.config.tableSize);
-        for (int i = 0 ; i < size && table.countCards() < env.config.tableSize ; i++){
-            int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
-            table.placeCard(deck.get(i), avaliableSlot);
-            deck.remove(i);
+        synchronized (table) {
+            int size = Math.min(deck.size(), env.config.tableSize);
+            for (int i = 0 ; i < size && table.countCards() < env.config.tableSize ; i++){
+                int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
+                table.placeCard(deck.get(i), avaliableSlot);
+                deck.remove(i);
+            }
         }
-        
-        
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // probably calling - Table.java placeCard func to each card
-        // if there are less then 12 cads on the tablr, but thers are cards in the deck
     }
 
     /**
@@ -156,9 +170,11 @@ public class Dealer implements Runnable {
     private void removeAllCardsFromTable() {
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // Collecting the cards back from the table when needed
-        for ( int slot : table.cardToSlot){
-            deck.add(table.slotToCard[slot]);
-            table.removeCard(slot);
+        synchronized (table) {
+            for ( int slot : table.cardToSlot){
+                deck.add(table.slotToCard[slot]);
+                table.removeCard(slot);
+            }
         }
     }
 

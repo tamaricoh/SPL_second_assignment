@@ -159,7 +159,7 @@ public class Table {
         // remove token - UI
         env.ui.removeToken(player, slot);
 
-        // WHAT DOES THIS FUNCTION RETURNS?
+        // WHAT DOES THIS FUNCTION RETURNS? if the token isnt placed - dont remove and return false
         return false;
     }
 }
