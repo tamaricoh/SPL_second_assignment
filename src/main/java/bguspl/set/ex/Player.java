@@ -57,7 +57,7 @@ public class Player implements Runnable {
      * The queue keeping  the key presses that a player did.
      */
 
-     Queue<Integer> queuePlayerTokens;
+     volatile Queue<Integer> queuePlayerTokens;
     
      /**
      * The class constructor.
@@ -92,6 +92,17 @@ public class Player implements Runnable {
             // send to the dealer right after the thired card got picked
             // if the set is legel - update the score.
             // check for panelty???
+
+            while(queuePlayerTokens.size() < 3){
+                try {
+                    playerThread.wait();
+                } catch (Exception e) {
+                    //terminate?
+                    // TODO: handle exception
+                }
+            //make dealer check if the player found a set
+            //give player panelty or rewared for the action
+            }
         }
         if (!human) try { aiThread.join(); } catch (InterruptedException ignored) {}
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
@@ -157,6 +168,15 @@ public class Player implements Runnable {
         if(!toRemove & queuePlayerTokens.size() < 3){   //if it's a new slot then add it to the table
             queuePlayerTokens.add(slot);
             table.placeToken(id, slot);
+            if(queuePlayerTokens.size() == 3){
+                this.notify();
+                Thread uiThread = Thread.currentThread();
+                try {                   //maybe unneccesry
+                    uiThread.wait();
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+            }
         }
     }
 
