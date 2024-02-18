@@ -54,6 +54,7 @@ public class Dealer implements Runnable {
         this.checkIfSet = new ArrayDeque<Integer>();
         this.setAttempt = new ArrayDeque<Integer>();
         this.correctSet = false;
+        this.terminate = false;
     }
 
     /**
@@ -67,7 +68,6 @@ public class Dealer implements Runnable {
             timerLoop();
             updateTimerDisplay(false);
             removeAllCardsFromTable();
-            // if()
         }
         announceWinners();
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
@@ -173,10 +173,12 @@ public class Dealer implements Runnable {
      * Reset and/or update the countdown and the countdown display.
      */
     private void updateTimerDisplay(boolean reset) {
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // once every minute the dealer collects all the cards from the table, reshuffles the deck and draws them anew.
-
-        // use setElapsed(long millies) or setCountdown(long millies, boolean warn) ???????????????????????????????????????????
+        boolean needWarning = (env.config.turnTimeoutWarningMillis >= System.currentTimeMillis());
+        if (reset){
+            env.ui.setCountdown(env.config.turnTimeoutMillis, needWarning);
+            return;
+        }
+        env.ui.setCountdown(reshuffleTime-System.currentTimeMillis(), needWarning);
     }
 
     /**
