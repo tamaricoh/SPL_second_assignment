@@ -79,6 +79,7 @@ public class Player implements Runnable {
         this.table = table;
         this.id = id;
         this.human = human;
+        terminate = false;
         queuePlayerTokens = new ArrayDeque<>(env.config.featureCount);
         checked = false;
         foundSet = false;
@@ -95,12 +96,12 @@ public class Player implements Runnable {
 
         while (!terminate) {
             synchronized(this){
-                while(queuePlayerTokens.size() < env.config.featureCount){      //wait for player to select 3 cards
+                while(queuePlayerTokens.size() < env.config.featureCount & !terminate){      //wait for player to select 3 cards
                     try {
                         playerThread.wait();
                     } catch (Exception e){}
                 }
-                notifyDealer();
+                if(!checked & !terminate) notifyDealer();
             }
             }
         if (!human) try { aiThread.join(); } catch (InterruptedException ignored) {}
@@ -116,12 +117,12 @@ public class Player implements Runnable {
         aiThread = new Thread(() -> {
             env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
             while (!terminate) {
-                while (queuePlayerTokens.size() < env.config.featureCount | checked) {
+                while ((queuePlayerTokens.size() < env.config.featureCount | checked) & !terminate) {
                     Random rand = new Random();
                     int randomSlot = rand.nextInt(env.config.tableSize + 1);
                     keyPressed(randomSlot);
                 }
-                if(!checked) notifyDealer();
+                if(!checked & !terminate) notifyDealer();
             }
             env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
         }, "computer-" + id);
@@ -132,9 +133,8 @@ public class Player implements Runnable {
      * Called when the game should be terminated.
      */
     public void terminate() {
-        
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        terminate = true;
+        this.notifyAll();
         /**
          * When the user clicks the close window button, the class WindowManager that we provided you
          * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
