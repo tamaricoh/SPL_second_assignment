@@ -67,6 +67,7 @@ public class Dealer implements Runnable {
             timerLoop();
             updateTimerDisplay(false);
             removeAllCardsFromTable();
+            // if()
         }
         announceWinners();
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
@@ -143,10 +144,13 @@ public class Dealer implements Runnable {
      * Check if any cards can be removed from the deck and placed on the table.
      */
     private void placeCardsOnTable() {
-        int size = Math.min(deck.size(), env.config.tableSize);
-        for (int i = 0 ; i < size && table.countCards() < env.config.tableSize ; i++){
+        int tableSize = env.config.tableSize;
+        int size = Math.min(deck.size(), tableSize);
+        int numOfCardsOnTable = table.countCards();
+        for (int i = 0 ; i < size &&  numOfCardsOnTable < tableSize ; i++){
             int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
             table.placeCard(deck.get(i), avaliableSlot);
+            numOfCardsOnTable++;
             deck.remove(i);
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,7 +176,7 @@ public class Dealer implements Runnable {
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // once every minute the dealer collects all the cards from the table, reshuffles the deck and draws them anew.
 
-        // use setElapsed(long millies) or setCountdown(long millies, boolean warn) ????????????????????
+        // use setElapsed(long millies) or setCountdown(long millies, boolean warn) ???????????????????????????????????????????
     }
 
     /**
