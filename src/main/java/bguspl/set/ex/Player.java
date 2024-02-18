@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.Iterator;
 import bguspl.set.Env;
+import java.util.Random;
 
 /**
  * This class manages the players' threads and data
@@ -58,6 +59,10 @@ public class Player implements Runnable {
      */
 
      volatile Queue<Integer> queuePlayerTokens;
+
+     public boolean checked;
+     public boolean foundSet;
+     Dealer dealer;
     
      /**
      * The class constructor.
@@ -70,40 +75,35 @@ public class Player implements Runnable {
      */
     public Player(Env env, Dealer dealer, Table table, int id, boolean human) {
         this.env = env;
+        this.dealer = dealer;
         this.table = table;
         this.id = id;
         this.human = human;
-        queuePlayerTokens = new ArrayDeque<>(3);
+        terminate = false;
+        queuePlayerTokens = new ArrayDeque<>(env.config.featureCount);
+        checked = false;
+        foundSet = false;
     }
 
     /**
      * The main player thread of each player starts here (main loop for the player thread).
      */
     @Override
-    public void run() {
+    public void  run() {
         playerThread = Thread.currentThread();
         env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
         if (!human) createArtificialIntelligence();
 
         while (!terminate) {
-            // TODO implement main player loop
-            // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // tries to find a set
-            // send to the dealer right after the thired card got picked
-            // if the set is legel - update the score.
-            // check for panelty???
-
-            while(queuePlayerTokens.size() < 3){
-                try {
-                    playerThread.wait();
-                } catch (Exception e) {
-                    //terminate?
-                    // TODO: handle exception
+            synchronized(this){
+                while(queuePlayerTokens.size() < env.config.featureCount & !terminate){      //wait for player to select 3 cards
+                    try {
+                        playerThread.wait();
+                    } catch (Exception e){}
                 }
-            //make dealer check if the player found a set
-            //give player panelty or rewared for the action
+                if(!checked & !terminate) notifyDealer();
             }
-        }
+            }
         if (!human) try { aiThread.join(); } catch (InterruptedException ignored) {}
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
     }
@@ -117,17 +117,12 @@ public class Player implements Runnable {
         aiThread = new Thread(() -> {
             env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
             while (!terminate) {
-                // TODO implement player key press simulator
-                // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // simulate the keyboard clicking
-                // chose 3 cards from the table, randomly (its actually chose 3 slots from the table)
-
-                // The player thread consumes the actions from the queue, placing or removing a token in the corresponding slot in the grid on the table.
-                // Once the player places his third token on the table, he must notify the dealer and wait until the dealer checks if it is a legal set or not. The dealer then gives him either a point or a penalty accordingly.
-
-                try {
-                    synchronized (this) { wait(); }
-                } catch (InterruptedException ignored) {}
+                while ((queuePlayerTokens.size() < env.config.featureCount | checked) & !terminate) {
+                    Random rand = new Random();
+                    int randomSlot = rand.nextInt(env.config.tableSize + 1);
+                    keyPressed(randomSlot);
+                }
+                if(!checked & !terminate) notifyDealer();
             }
             env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
         }, "computer-" + id);
@@ -138,8 +133,8 @@ public class Player implements Runnable {
      * Called when the game should be terminated.
      */
     public void terminate() {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        terminate = true;
+        this.notifyAll();
         /**
          * When the user clicks the close window button, the class WindowManager that we provided you
          * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
@@ -163,19 +158,15 @@ public class Player implements Runnable {
             if(iter.next() == slot) {
                 table.removeToken(id, slot);
                 toRemove = true;
+                checked = false;
             }
         }
         if(!toRemove & queuePlayerTokens.size() < 3){   //if it's a new slot then add it to the table
             queuePlayerTokens.add(slot);
+            checked = false;
             table.placeToken(id, slot);
             if(queuePlayerTokens.size() == 3){
-                this.notify();
-                Thread uiThread = Thread.currentThread();
-                try {                   //maybe unneccesry
-                    uiThread.wait();
-                } catch (Exception e) {
-                    // TODO: handle exception
-                }
+                this.notifyAll();
             }
         }
     }
@@ -187,7 +178,8 @@ public class Player implements Runnable {
      * @post - the player's score is updated in the ui.
      */
     public void point() {
-        removeTokens(); 
+        removeTokens();
+        checked = false;
         int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
         try {
@@ -200,7 +192,6 @@ public class Player implements Runnable {
      * Penalize a player and perform other related actions.
      */
     public void penalty() {
-        removeTokens();
         try {
             env.ui.setFreeze(id, env.config.penaltyFreezeMillis);
             Thread.sleep(env.config.penaltyFreezeMillis); // sleep for 3 seconds
@@ -221,6 +212,23 @@ public class Player implements Runnable {
         while(!queuePlayerTokens.isEmpty()){
             int slot = (int) queuePlayerTokens.remove();
             table.removeToken(id, slot);
+        }
+    }
+
+    private void notifyDealer(){
+        Thread thread = Thread.currentThread(); 
+        dealer.checkIfSet.add(id);
+        dealer.notifyAll(); 
+        try {
+            thread.wait();
+        } catch (Exception e){}
+        if (foundSet){                         // reward or punish accordingly
+            point();
+            checked = false;
+        }
+        else{
+            penalty();
+            checked = true;
         }
     }
 }
