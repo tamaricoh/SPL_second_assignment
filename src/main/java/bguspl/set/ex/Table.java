@@ -33,8 +33,8 @@ public class Table {
 
 
     // tokens
-    Queue<Integer> queueFirstPlayerTokens = new ArrayDeque<>(3);
-    Queue<Integer> queueSecondPlayerTokens = new ArrayDeque<>(3);
+    // Queue<Integer> queueFirstPlayerTokens = new ArrayDeque<>(3);
+    // Queue<Integer> queueSecondPlayerTokens = new ArrayDeque<>(3);
     // private int[] firstPlayerTokens = new int[]{-1, -1, -1};
     // private int tokensPlacedByFirst = 0;
     // private int[] secondPlayerTokens = new int[]{-1, -1, -1};
@@ -90,6 +90,15 @@ public class Table {
         return cards;
     }
 
+    public int avaliableSlot(){
+        for (int i = 0 ; i < slotToCard.length ; i++){
+            if (slotToCard[i] == null){
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /**
      * Places a card on the table in a grid slot.
      * @param card - the card id to place in the slot.
@@ -102,12 +111,13 @@ public class Table {
             Thread.sleep(env.config.tableDelayMillis);
         } catch (InterruptedException ignored) {}
 
+        // place card in the arrays
         cardToSlot[card] = slot;
         slotToCard[slot] = card;
 
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // unsert the given card to the picked slot
+        // place card - UI
+        env.ui.placeCard(card, slot);
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     }
 
     /**
@@ -118,12 +128,12 @@ public class Table {
         try {
             Thread.sleep(env.config.tableDelayMillis);
         } catch (InterruptedException ignored) {}
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         int card  = slotToCard[slot];
         cardToSlot[card] = null;
         slotToCard[slot] = null;
-        // UI should update -and not show cards
+        // UI should update - removw the card
+        env.ui.removeCard(slot);
     }
 
     /**
@@ -132,19 +142,10 @@ public class Table {
      * @param slot   - the slot on which to place the token.
      */
     public void placeToken(int player, int slot) {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        
-        int card = slotToCard[slot];
-        if (player == 1){
-            queueFirstPlayerTokens.offer(card);
-            return;
-        }
-        queueSecondPlayerTokens.offer(card);
-        
-    
-        // i think we suppose to mark the card? 
-        // every player palce at most 3 tokens. after the third one, he asks the dealer to check it.
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // place token - UI
+        env.ui.placeToken(player, slot);
+
     }
 
     /**
@@ -154,25 +155,11 @@ public class Table {
      * @return       - true iff a token was successfully removed.
      */
     public boolean removeToken(int player, int slot) {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // remove the players mark from this slot (out of queue??)
-        // return true if succeeded 
-        int card = slotToCard[slot];
-        int lastToken;
-        if (player == 1){
-            lastToken = queueFirstPlayerTokens.peek();
-            if (lastToken == card){
-                queueFirstPlayerTokens.poll();
-                return true;
-            }
-            return false;
-        }
-        lastToken = queueSecondPlayerTokens.peek();
-        if (lastToken == card){
-            queueSecondPlayerTokens.poll();
-            return true;
-        }
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // remove token - UI
+        env.ui.removeToken(player, slot);
+
+        // WHAT DOES THIS FUNCTION RETURNS? if the token isnt placed - dont remove and return false
         return false;
     }
 }
