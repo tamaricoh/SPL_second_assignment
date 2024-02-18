@@ -1,5 +1,8 @@
 package bguspl.set.ex;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.Iterator;
 import bguspl.set.Env;
 
 /**
@@ -51,6 +54,12 @@ public class Player implements Runnable {
     private int score;
 
     /**
+     * The queue keeping  the key presses that a player did.
+     */
+
+     volatile Queue<Integer> queuePlayerTokens;
+    
+     /**
      * The class constructor.
      *
      * @param env    - the environment object.
@@ -64,6 +73,7 @@ public class Player implements Runnable {
         this.table = table;
         this.id = id;
         this.human = human;
+        queuePlayerTokens = new ArrayDeque<>(3);
     }
 
     /**
@@ -82,6 +92,17 @@ public class Player implements Runnable {
             // send to the dealer right after the thired card got picked
             // if the set is legel - update the score.
             // check for panelty???
+
+            while(queuePlayerTokens.size() < 3){
+                try {
+                    playerThread.wait();
+                } catch (Exception e) {
+                    //terminate?
+                    // TODO: handle exception
+                }
+            //make dealer check if the player found a set
+            //give player panelty or rewared for the action
+            }
         }
         if (!human) try { aiThread.join(); } catch (InterruptedException ignored) {}
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
@@ -136,10 +157,27 @@ public class Player implements Runnable {
      * @param slot - the slot corresponding to the key pressed.
      */
     public void keyPressed(int slot) {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // what happened when we click on the keyboard? 
-        // insert the picekd card to the queue
+        Iterator<Integer> iter = queuePlayerTokens.iterator();
+        Boolean toRemove = false;
+        while(iter.hasNext()){                  // check if the slot was chosen already and remove it if so
+            if(iter.next() == slot) {
+                table.removeToken(id, slot);
+                toRemove = true;
+            }
+        }
+        if(!toRemove & queuePlayerTokens.size() < 3){   //if it's a new slot then add it to the table
+            queuePlayerTokens.add(slot);
+            table.placeToken(id, slot);
+            if(queuePlayerTokens.size() == 3){
+                this.notify();
+                Thread uiThread = Thread.currentThread();
+                try {                   //maybe unneccesry
+                    uiThread.wait();
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+            }
+        }
     }
 
     /**
@@ -149,25 +187,40 @@ public class Player implements Runnable {
      * @post - the player's score is updated in the ui.
      */
     public void point() {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // score++;
-        // wait one second
-
+        removeTokens(); 
         int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
+        try {
+            env.ui.setFreeze(id, env.config.pointFreezeMillis);
+            Thread.sleep(env.config.pointFreezeMillis); // sleeps for 1 sec
+        } catch (InterruptedException e) {}
     }
 
     /**
      * Penalize a player and perform other related actions.
      */
     public void penalty() {
-        // TODO implement
-        // TODO implement~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // wait some seconds
+        removeTokens();
+        try {
+            env.ui.setFreeze(id, env.config.penaltyFreezeMillis);
+            Thread.sleep(env.config.penaltyFreezeMillis); // sleep for 3 seconds
+        } catch (InterruptedException e) {}
     }
 
     public int score() {
         return score;
+    }
+
+    /**
+     * removes the player tokens and empties the queue.
+     * 
+     * @post - the tables doesn't display the player tokens
+     * @post - queuePlayerTokens is empty
+     */
+    private void removeTokens(){
+        while(!queuePlayerTokens.isEmpty()){
+            int slot = (int) queuePlayerTokens.remove();
+            table.removeToken(id, slot);
+        }
     }
 }
