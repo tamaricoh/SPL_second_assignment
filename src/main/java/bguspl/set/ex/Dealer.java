@@ -34,6 +34,7 @@ public class Dealer implements Runnable {
     private final List<Integer> deck;
     private Queue<Integer> setAttempt;
     private boolean correctSet;
+    // private ArrayDeque<Thread> playersThreads;
 
 
     /**
@@ -63,6 +64,12 @@ public class Dealer implements Runnable {
     @Override
     public void run() {
         env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
+        
+        for (Player player : players) {
+            Thread playersThread = new Thread(()-> player.run()); // while (!Thread.interrupted())?????????????????
+            playersThread.start();
+        }
+
         while (!shouldFinish()) {
             placeCardsOnTable();
             timerLoop();
@@ -109,12 +116,13 @@ public class Dealer implements Runnable {
      * Called when the game should be terminated.
      */
     public void terminate() {
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        /**
-         * When the user clicks the close window button, the class WindowManager that we provided you
-         * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
-         * method for each opened player thread. 
-         */
+        terminate = true;
+        for (int i = players.length-1 ; i >= 0 ; i-- ){
+            players[i].terminate();
+        }
+        synchronized (this){
+            this.notifyAll();
+        }
     }
 
     /**
