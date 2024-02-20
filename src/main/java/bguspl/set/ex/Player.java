@@ -1,5 +1,4 @@
 package bguspl.set.ex;
-
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.Iterator;
@@ -80,7 +79,7 @@ public class Player implements Runnable {
         this.id = id;
         this.human = human;
         terminate = false;
-        queuePlayerTokens = new ArrayDeque<>(env.config.featureCount);
+        queuePlayerTokens = new ArrayDeque<>(env.config.featureSize);
         checked = false;
         foundSet = false;
     }
@@ -96,7 +95,7 @@ public class Player implements Runnable {
 
         while (!terminate) {
             synchronized(this){
-                while(queuePlayerTokens.size() < env.config.featureCount & !terminate){      //wait for player to select 3 cards
+                while(queuePlayerTokens.size() < env.config.featureSize & !terminate){      //wait for player to select 3 cards
                     try {
                         playerThread.wait();
                     } catch (Exception e){}
@@ -117,12 +116,11 @@ public class Player implements Runnable {
         aiThread = new Thread(() -> {
             env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
             while (!terminate) {
-                while ((queuePlayerTokens.size() < env.config.featureCount | checked) & !terminate) {
+                while ((queuePlayerTokens.size() < env.config.featureSize | checked) & !terminate) {
                     Random rand = new Random();
                     int randomSlot = rand.nextInt(env.config.tableSize + 1);
                     keyPressed(randomSlot);
                 }
-                if(!checked & !terminate) notifyDealer();
             }
             env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
         }, "computer-" + id);
@@ -154,20 +152,20 @@ public class Player implements Runnable {
      * @param slot - the slot corresponding to the key pressed.
      */
     public void keyPressed(int slot) {
-        Iterator<Integer> iter = queuePlayerTokens.iterator();
         Boolean toRemove = false;
-        while(iter.hasNext()){                  // check if the slot was chosen already and remove it if so
-            if(iter.next() == slot) {
+        for(int token : queuePlayerTokens){        // check if the slot was chosen already and remove it if so
+            if(token == slot) {
                 table.removeToken(id, slot);
                 toRemove = true;
+                queuePlayerTokens.remove(token);
                 checked = false;
             }
         }
-        if(!toRemove & queuePlayerTokens.size() < 3){   //if it's a new slot then add it to the table
+        if(!toRemove && queuePlayerTokens.size() < env.config.featureSize){   //if it's a new slot then add it to the table
             queuePlayerTokens.add(slot);
-            checked = false;
             table.placeToken(id, slot);
-            if(queuePlayerTokens.size() == 3){
+            checked = false;
+            if(queuePlayerTokens.size() == env.config.featureSize){
                 this.notifyAll();
             }
         }
@@ -212,7 +210,7 @@ public class Player implements Runnable {
      */
     private void removeTokens(){
         while(!queuePlayerTokens.isEmpty()){
-            int slot = (int) queuePlayerTokens.remove();
+            Integer slot = queuePlayerTokens.remove();
             table.removeToken(id, slot);
         }
     }
