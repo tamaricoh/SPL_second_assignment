@@ -218,7 +218,7 @@ public class Player implements Runnable {
     private void notifyDealer(){
         Thread thread = Thread.currentThread(); 
         dealer.checkIfSet.add(id);
-        dealer.notifyAll(); 
+        dealer.notify(); 
         try {
             thread.wait();
         } catch (Exception e){}

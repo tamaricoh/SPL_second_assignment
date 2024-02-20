@@ -103,8 +103,16 @@ public class Dealer implements Runnable {
                                 i++;
                             }
                             this.correctSet = env.util.testSet(cards);
-                            player.foundSet = correctSet;
-                            player.notifyAll();
+                            // player.foundSet = correctSet;
+                            if (correctSet){                         // reward or punish accordingly
+                                player.point();
+                                player.checked = false;
+                            }
+                            else{
+                                player.penalty();
+                                player.checked = true;
+                            }
+                            // player.notify();
                             continue;
                         }
                     }
