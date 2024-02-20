@@ -33,8 +33,7 @@ public class Table {
 
 
     // tokens
-    // Queue<Integer> queueFirstPlayerTokens = new ArrayDeque<>(3);
-    // Queue<Integer> queueSecondPlayerTokens = new ArrayDeque<>(3);
+    public Integer[][] playerTokens;
     // private int[] firstPlayerTokens = new int[]{-1, -1, -1};
     // private int tokensPlacedByFirst = 0;
     // private int[] secondPlayerTokens = new int[]{-1, -1, -1};
@@ -52,6 +51,7 @@ public class Table {
         this.env = env;
         this.slotToCard = slotToCard;
         this.cardToSlot = cardToSlot;
+        this.playerTokens = makeDefaultarray();
     }
 
     /**
@@ -117,7 +117,6 @@ public class Table {
 
         // place card - UI
         env.ui.placeCard(card, slot);
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     }
 
     /**
@@ -128,11 +127,13 @@ public class Table {
         try {
             Thread.sleep(env.config.tableDelayMillis);
         } catch (InterruptedException ignored) {}
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         int card  = slotToCard[slot];
         cardToSlot[card] = null;
         slotToCard[slot] = null;
-        // UI should update - removw the card
+        for(int i = 0; i<env.config.players; i++){          //remove the all players tokens from the card
+            this.removeToken(i, slot);
+        }
+        // UI should update - remove the card
         env.ui.removeCard(slot);
     }
 
@@ -142,9 +143,9 @@ public class Table {
      * @param slot   - the slot on which to place the token.
      */
     public void placeToken(int player, int slot) {
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // place token - UI
         env.ui.placeToken(player, slot);
+        playerTokens[slot][player] = player;
 
     }
 
@@ -155,11 +156,20 @@ public class Table {
      * @return       - true iff a token was successfully removed.
      */
     public boolean removeToken(int player, int slot) {
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // remove token - UI
+        boolean placedToken = (playerTokens[slot][player] == player);
         env.ui.removeToken(player, slot);
+        this.playerTokens[slot][player] = -1;
+        return placedToken;
+    }
 
-        // WHAT DOES THIS FUNCTION RETURNS? if the token isnt placed - dont remove and return false
-        return false;
+    private Integer[][] makeDefaultarray(){
+        playerTokens = new Integer[env.config.tableSize][env.config.players];
+        for (int i = 0; i < env.config.tableSize; i++){
+            for (int j = 0; j < env.config.players; j++){
+                playerTokens[i][j] = -1;
+            }
+        }
+        return playerTokens;
     }
 }
