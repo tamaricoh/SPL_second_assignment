@@ -27,6 +27,7 @@ public class Dealer implements Runnable {
     private final Table table;
     private final Player[] players;
     public ArrayDeque<Integer> checkIfSet; // player that want the dealer to check its set will push its id to here.
+    private long timeLoopStarted;
 
     /**
      * The list of card ids that are left in the dealer's deck.
@@ -34,12 +35,14 @@ public class Dealer implements Runnable {
     private final List<Integer> deck;
     private Queue<Integer> setAttempt;
     private boolean correctSet;
+    // private ArrayDeque<Thread> playersThreads;
 
 
     /**
      * True iff game should be terminated.
      */
     private volatile boolean terminate;
+    
 
     /**
      * The time when the dealer needs to reshuffle the deck due to turn timeout.
@@ -55,6 +58,7 @@ public class Dealer implements Runnable {
         this.setAttempt = new ArrayDeque<Integer>();
         this.correctSet = false;
         this.terminate = false;
+        this.reshuffleTime = env.config.turnTimeoutMillis;
     }
 
     /**
@@ -63,10 +67,16 @@ public class Dealer implements Runnable {
     @Override
     public void run() {
         env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
+        
+        for (Player player : players) {
+            Thread playersThread = new Thread(()-> player.run()); // while (!Thread.interrupted())?????????????????
+            playersThread.start();
+        }
+
         while (!shouldFinish()) {
             placeCardsOnTable();
             timerLoop();
-            updateTimerDisplay(false);
+            updateTimerDisplay(true);
             removeAllCardsFromTable();
         }
         announceWinners();
@@ -77,7 +87,8 @@ public class Dealer implements Runnable {
      * The inner loop of the dealer thread that runs as long as the countdown did not time out.
      */
     private void timerLoop() {
-        while (!terminate && System.currentTimeMillis() < reshuffleTime) {
+        this.timeLoopStarted = System.currentTimeMillis();
+        while (!terminate && System.currentTimeMillis() < timeLoopStarted + reshuffleTime) { 
             sleepUntilWokenOrTimeout(); // rest or check set
             synchronized (table){
                 if (!checkIfSet.isEmpty()) {
@@ -109,12 +120,13 @@ public class Dealer implements Runnable {
      * Called when the game should be terminated.
      */
     public void terminate() {
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        /**
-         * When the user clicks the close window button, the class WindowManager that we provided you
-         * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
-         * method for each opened player thread. 
-         */
+        terminate = true;
+        for (int i = players.length-1 ; i >= 0 ; i-- ){
+            players[i].terminate();
+        }
+        synchronized (this){
+            this.notifyAll();
+        }
     }
 
     /**
@@ -178,7 +190,7 @@ public class Dealer implements Runnable {
             env.ui.setCountdown(env.config.turnTimeoutMillis, needWarning);
             return;
         }
-        env.ui.setCountdown(reshuffleTime-System.currentTimeMillis(), needWarning);
+        env.ui.setCountdown(reshuffleTime-System.currentTimeMillis()+timeLoopStarted, needWarning);
     }
 
     /**
@@ -187,9 +199,11 @@ public class Dealer implements Runnable {
     private void removeAllCardsFromTable() {
         // Collecting the cards back from the table when needed (after a minute or when there are no sets on the table)
         synchronized (table) {
-            for ( int slot : table.cardToSlot){
-                deck.add(table.slotToCard[slot]);
-                table.removeCard(slot);
+            for ( Integer slot : table.cardToSlot){
+                if (slot != null){
+                    deck.add(table.slotToCard[slot]);
+                    table.removeCard(slot);
+                }
             }
             Collections.shuffle(deck);
         }
