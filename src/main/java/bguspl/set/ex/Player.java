@@ -134,7 +134,9 @@ public class Player implements Runnable {
      */
     public void terminate() {
         terminate = true;
-        this.notifyAll();
+        synchronized (this){
+            this.notifyAll();
+        }
         /**
          * When the user clicks the close window button, the class WindowManager that we provided you
          * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
