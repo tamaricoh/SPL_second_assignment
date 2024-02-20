@@ -56,6 +56,7 @@ public class Dealer implements Runnable {
         this.setAttempt = new ArrayDeque<Integer>();
         this.correctSet = false;
         this.terminate = false;
+        this.reshuffleTime = env.config.turnTimeoutMillis;
     }
 
     /**
@@ -73,7 +74,7 @@ public class Dealer implements Runnable {
         while (!shouldFinish()) {
             placeCardsOnTable();
             timerLoop();
-            updateTimerDisplay(false);
+            updateTimerDisplay(true);
             removeAllCardsFromTable();
         }
         announceWinners();
