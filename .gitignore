@@ -3,3 +3,6 @@ apache-maven-3.9.6-bin/
 logs/
 pom.xml
 target/
+.*
+.txt
+/home/spl211/Desktop/Set_Card_Game/bonuses.txt
