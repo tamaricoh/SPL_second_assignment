@@ -98,6 +98,7 @@ public class Dealer implements Runnable {
                 placeCardsOnTable();
             }
         }
+        this.correctSet = false;
     }
 
     /**
@@ -128,9 +129,11 @@ public class Dealer implements Runnable {
      */
     private void removeCardsFromTable() {
         if (correctSet){
-            this.correctSet = false;
             for(Integer slot : setAttempt){
                 table.removeCard(slot);
+                for(Player player:players){
+                    player.queuePlayerTokens.remove(slot);      //this could be problometic if players have diffrent slot repreasntions
+                }
             }
         }
     }

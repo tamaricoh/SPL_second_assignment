@@ -213,7 +213,8 @@ public class Player implements Runnable {
      * @post - the tables doesn't display the player tokens
      * @post - queuePlayerTokens is empty
      */
-    private void removeTokens(){
+    public void removeTokens(){
+        
         while(!queuePlayerTokens.isEmpty()){
             Integer slot = queuePlayerTokens.remove();
             table.removeToken(id, slot);

@@ -135,6 +135,7 @@ public class Table {
         }
         // UI should update - remove the card
         env.ui.removeCard(slot);
+        System.out.println("tamar: ---------- card removed" );
     }
 
     /**
