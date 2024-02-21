@@ -90,11 +90,13 @@ public class Dealer implements Runnable {
         this.timeLoopStarted = System.currentTimeMillis();
         while (!terminate && System.currentTimeMillis() < timeLoopStarted + reshuffleTime) { 
             sleepUntilWokenOrTimeout(); // rest or check set
-            checkForSet();
-            if (correctSet) timeLoopStarted = System.currentTimeMillis();
-            updateTimerDisplay(correctSet); 
-            removeCardsFromTable();
-            placeCardsOnTable();
+            synchronized (table){
+                checkForSet();
+                if (correctSet) timeLoopStarted = System.currentTimeMillis();
+                updateTimerDisplay(correctSet); 
+                removeCardsFromTable();
+                placeCardsOnTable();
+            }
         }
     }
 
@@ -146,7 +148,6 @@ public class Dealer implements Runnable {
             numOfCardsOnTable++;
             deck.remove(i);
         }
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     }
 
     /**
@@ -161,11 +162,11 @@ public class Dealer implements Runnable {
     }
 
     private void checkForSet(){
-        synchronized (table){
-            if (!checkIfSet.isEmpty()) {
-                Integer playrerToCheckId = checkIfSet.poll();
-                for (Player player : players){
-                    if (player.id == playrerToCheckId){
+        if (!checkIfSet.isEmpty()) {
+            Integer playrerToCheckId = checkIfSet.poll();
+            for (Player player : players){
+                if (player.id == playrerToCheckId){
+                    synchronized (player){
                         this.setAttempt = player.queuePlayerTokens;
                         int [] cards = new int [setAttempt.size()];
                         int i = 0;
@@ -184,7 +185,7 @@ public class Dealer implements Runnable {
                             player.checked = true;
                         }
                         player.notify();
-                        continue;
+                        return;
                     }
                 }
             }

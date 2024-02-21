@@ -59,7 +59,7 @@ public class Player implements Runnable {
 
      volatile Queue<Integer> queuePlayerTokens;
 
-     public boolean checked;
+     public boolean checked; // exists of 3 tokens && dealer checked them
      public boolean foundSet;
      Dealer dealer;
     
@@ -102,7 +102,7 @@ public class Player implements Runnable {
                 }
                 if(!checked & !terminate) notifyDealer();
             }
-            }
+        }
         if (!human) try { aiThread.join(); } catch (InterruptedException ignored) {}
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
     }
@@ -151,7 +151,7 @@ public class Player implements Runnable {
      *
      * @param slot - the slot corresponding to the key pressed.
      */
-    public void keyPressed(int slot) {
+    public void keyPressed(int slot) { // sync to table.
         Boolean toRemove = false;
         for(int token : queuePlayerTokens){        // check if the slot was chosen already and remove it if so
             if(token == slot) {
@@ -159,6 +159,7 @@ public class Player implements Runnable {
                 toRemove = true;
                 queuePlayerTokens.remove(token);
                 checked = false;
+                continue;
             }
         }
         if(!toRemove && queuePlayerTokens.size() < env.config.featureSize){   //if it's a new slot then add it to the table
@@ -166,7 +167,11 @@ public class Player implements Runnable {
             table.placeToken(id, slot);
             checked = false;
             if(queuePlayerTokens.size() == env.config.featureSize){
-                this.notifyAll();
+                System.out.println("Tamar: --------------------------------- queuePlayerTokens.size() == 3");
+                try{
+                    this.notify();
+                }
+                catch (Exception e) {}
             }
         }
     }
@@ -218,10 +223,13 @@ public class Player implements Runnable {
     private void notifyDealer(){
         Thread thread = Thread.currentThread(); 
         dealer.checkIfSet.add(id);
-        dealer.notify(); 
+        System.out.println("Tamar: -------------------- notifyDealer");
         try {
             thread.wait();
-        } catch (Exception e){}
+        } catch (Exception e) {dealer.notify();}
+        // try {
+        //     thread.wait();
+        // } catch (Exception e){}
     }
 
     public Thread getThread(){
