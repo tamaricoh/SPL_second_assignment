@@ -1,5 +1,6 @@
 apache-maven-3.9.6-bin/
 logs/
+*.log
 pom.xml
 target/
 .*
