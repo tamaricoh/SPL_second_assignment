@@ -222,13 +222,13 @@ public class Player implements Runnable {
         try {
             thread.wait();
         } catch (Exception e){}
-        if (foundSet){                         // reward or punish accordingly
-            point();
-            checked = false;
-        }
-        else{
-            penalty();
-            checked = true;
-        }
+        // if (foundSet){                         // reward or punish accordingly
+        //     point();
+        //     checked = false;
+        // }
+        // else{
+        //     penalty();
+        //     checked = true;
+        // }
     }
 }
