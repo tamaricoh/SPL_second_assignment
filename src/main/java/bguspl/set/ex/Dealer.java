@@ -90,37 +90,11 @@ public class Dealer implements Runnable {
         this.timeLoopStarted = System.currentTimeMillis();
         while (!terminate && System.currentTimeMillis() < timeLoopStarted + reshuffleTime) { 
             sleepUntilWokenOrTimeout(); // rest or check set
-            synchronized (table){
-                if (!checkIfSet.isEmpty()) {
-                    Integer playrerToCheckId = checkIfSet.poll();
-                    for (Player player : players){
-                        if (player.id == playrerToCheckId){
-                            this.setAttempt = player.queuePlayerTokens;
-                            int [] cards = new int [setAttempt.size()];
-                            int i = 0;
-                            for (Integer slot : setAttempt){
-                                cards[i] = table.slotToCard[slot];
-                                i++;
-                            }
-                            this.correctSet = env.util.testSet(cards);
-                            // player.foundSet = correctSet;
-                            if (correctSet){                         // reward or punish accordingly
-                                player.point();
-                                player.checked = false;
-                            }
-                            else{
-                                player.penalty();
-                                player.checked = true;
-                            }
-                            // player.notify();
-                            continue;
-                        }
-                    }
-                }   
-                updateTimerDisplay(false); 
-                removeCardsFromTable();
-                placeCardsOnTable();
-            }
+            checkForSet();
+            if (correctSet) timeLoopStarted = System.currentTimeMillis();
+            updateTimerDisplay(correctSet); 
+            removeCardsFromTable();
+            placeCardsOnTable();
         }
     }
 
@@ -128,13 +102,14 @@ public class Dealer implements Runnable {
      * Called when the game should be terminated.
      */
     public void terminate() {
-        terminate = true;
         for (int i = players.length-1 ; i >= 0 ; i-- ){
             players[i].terminate();
+            try{
+                players[i].getThread().join(); 
+            } catch (InterruptedException e){}
         }
-        synchronized (this){
-            this.notifyAll();
-        }
+        terminate = true;
+        this.notifyAll();
     }
 
     /**
@@ -182,10 +157,40 @@ public class Dealer implements Runnable {
         try {
             // Wait for either a notification or for one second
             wait(1000);
-        } catch (InterruptedException e) {
-            
-        }
+        } catch (InterruptedException e) {}
     }
+
+    private void checkForSet(){
+        synchronized (table){
+            if (!checkIfSet.isEmpty()) {
+                Integer playrerToCheckId = checkIfSet.poll();
+                for (Player player : players){
+                    if (player.id == playrerToCheckId){
+                        this.setAttempt = player.queuePlayerTokens;
+                        int [] cards = new int [setAttempt.size()];
+                        int i = 0;
+                        for (Integer slot : setAttempt){
+                            cards[i] = table.slotToCard[slot];
+                            i++;
+                        }
+                        this.correctSet = env.util.testSet(cards);
+                        // player.foundSet = correctSet;
+                        if (correctSet){                         // reward or punish accordingly
+                            player.point();
+                            player.checked = false;
+                        }
+                        else{
+                            player.penalty();
+                            player.checked = true;
+                        }
+                        player.notify();
+                        continue;
+                    }
+                }
+            }
+        } 
+    }
+
 
     /**
      * Reset and/or update the countdown and the countdown display.
