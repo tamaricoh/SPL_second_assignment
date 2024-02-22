@@ -89,6 +89,7 @@ public class Player implements Runnable {
      */
     @Override
     public void  run() {
+        System.out.println("Tamar: ________ "+"Player : "+id+" run()");
         playerThread = Thread.currentThread();
         env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
         if (!human) createArtificialIntelligence();
@@ -131,6 +132,7 @@ public class Player implements Runnable {
      * Called when the game should be terminated.
      */
     public void terminate() {
+        System.out.println("Tamar: ________ "+"Player : "+id+" terminate()");
         terminate = true;
         synchronized (this){
             this.notifyAll();
@@ -152,26 +154,33 @@ public class Player implements Runnable {
      * @param slot - the slot corresponding to the key pressed.
      */
     public void keyPressed(int slot) { // sync to table.
-        Boolean toRemove = false;
-        for(int token : queuePlayerTokens){        // check if the slot was chosen already and remove it if so
-            if(token == slot) {
-                table.removeToken(id, slot);
-                toRemove = true;
-                queuePlayerTokens.remove(token);
-                checked = false;
-                continue;
-            }
-        }
-        if(!toRemove && queuePlayerTokens.size() < env.config.featureSize){   //if it's a new slot then add it to the table
-            queuePlayerTokens.add(slot);
-            table.placeToken(id, slot);
-            checked = false;
-            if(queuePlayerTokens.size() == env.config.featureSize){
-                System.out.println("Tamar: --------------------------------- queuePlayerTokens.size() == 3");
-                try{
-                    this.notify();
+        System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed()");
+        synchronized (table){
+            System.out.println("Tamar: -----" + "thread on key pressed"+Thread.currentThread().getName());
+            Boolean toRemove = false;
+            for(int token : queuePlayerTokens){        // check if the slot was chosen already and remove it if so
+                if(token == slot) {
+                    table.removeToken(id, slot);
+                    toRemove = true;
+                    queuePlayerTokens.remove(token);
+                    checked = false;
+                    continue;
                 }
-                catch (Exception e) {}
+            }
+            if(!toRemove && queuePlayerTokens.size() < env.config.featureSize){   //if it's a new slot then add it to the table
+            System.out.println("Tamar: -----" + "inside the first if");
+                queuePlayerTokens.add(slot);
+                table.placeToken(id, slot);
+                checked = false;
+                if(queuePlayerTokens.size() == env.config.featureSize){
+                    System.out.println("Tamar: -----" + "inside the second if");
+                    System.out.println("Tamar: ----- queuePlayerTokens.size() == 3");
+                    try{
+                        dealer.checkIfSet.add(id);
+                        this.notify();
+                    }
+                    catch (Exception e) {}
+                }
             }
         }
     }
@@ -183,20 +192,23 @@ public class Player implements Runnable {
      * @post - the player's score is updated in the ui.
      */
     public void point() {
+        System.out.println("Tamar: ________ "+"Player : "+id+" point()");
         removeTokens();
         checked = false;
-        int ignored = table.countCards(); // this part is just for demonstration in the unit tests
+        // int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
         try {
             env.ui.setFreeze(id, env.config.pointFreezeMillis);
             Thread.sleep(env.config.pointFreezeMillis); // sleeps for 1 sec
         } catch (InterruptedException e) {}
+        env.ui.setFreeze(id, 0);
     }
 
     /**
      * Penalize a player and perform other related actions.
      */
     public void penalty() {
+        System.out.println("Tamar: ________ "+"Player : "+id+" panelty()");
         try {
             env.ui.setFreeze(id, env.config.penaltyFreezeMillis);
             Thread.sleep(env.config.penaltyFreezeMillis); // sleep for 3 seconds
@@ -204,6 +216,7 @@ public class Player implements Runnable {
     }
 
     public int score() {
+        System.out.println("Tamar: ________ "+"Player : "+id+" score()");
         return score;
     }
 
@@ -214,6 +227,7 @@ public class Player implements Runnable {
      * @post - queuePlayerTokens is empty
      */
     private void removeTokens(){
+        System.out.println("Tamar: ________ "+"Player : "+id+" removeTokens()");
         while(!queuePlayerTokens.isEmpty()){
             Integer slot = queuePlayerTokens.remove();
             table.removeToken(id, slot);
@@ -221,18 +235,20 @@ public class Player implements Runnable {
     }
 
     private void notifyDealer(){
-        Thread thread = Thread.currentThread(); 
-        dealer.checkIfSet.add(id);
-        System.out.println("Tamar: -------------------- notifyDealer");
-        try {
-            thread.wait();
-        } catch (Exception e) {dealer.notify();}
+        System.out.println("Tamar: ________ "+"Player : "+id+" notifyDealer()");
+        synchronized (table) {
+            Thread thread = Thread.currentThread(); 
+            try {
+                thread.wait();
+            } catch (Exception e) {dealer.notify();}
+        }
         // try {
         //     thread.wait();
         // } catch (Exception e){}
     }
 
     public Thread getThread(){
+        System.out.println("Tamar: ________ "+"Player : "+id+" getThread()");
         return playerThread;
     }
 }
