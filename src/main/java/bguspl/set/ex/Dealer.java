@@ -112,7 +112,7 @@ public class Dealer implements Runnable {
         }
         for (Player player : players){
             try{
-                players[i].getThread().join(); 
+                player.getThread().join(); 
             } catch (InterruptedException e){}
         }
         terminate = true;
