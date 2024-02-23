@@ -70,7 +70,7 @@ public class Dealer implements Runnable {
         env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
         
         for (Player player : players) {
-            Thread playersThread = new Thread(()-> player.run()); // while (!Thread.interrupted())?????????????????
+            Thread playersThread = new Thread(()-> player.run()); 
             playersThread.start();
         }
 
@@ -81,6 +81,7 @@ public class Dealer implements Runnable {
             removeAllCardsFromTable();
         }
         announceWinners();
+        terminate();
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
     }
 
@@ -92,13 +93,11 @@ public class Dealer implements Runnable {
         this.timeLoopStarted = System.currentTimeMillis();
         while (!terminate && System.currentTimeMillis() < timeLoopStarted + reshuffleTime) { 
             sleepUntilWokenOrTimeout(); // rest or check set
-            synchronized (table){
-                checkForSet();
-                if (correctSet) timeLoopStarted = System.currentTimeMillis();
-                updateTimerDisplay(correctSet); 
-                removeCardsFromTable();
-                placeCardsOnTable();
-            }
+            checkForSet();
+            if (correctSet) timeLoopStarted = System.currentTimeMillis();
+            updateTimerDisplay(correctSet); 
+            removeCardsFromTable();
+            placeCardsOnTable();
         }
     }
 
@@ -107,16 +106,19 @@ public class Dealer implements Runnable {
      */
     public void terminate() {
         System.out.println("Tamar: ________ "+"Dealer : "+" terminate()");
-        for (Player player : players){
-            player.terminate();
-        }
-        for (Player player : players){
-            try{
-                player.getThread().join(); 
-            } catch (InterruptedException e){}
-        }
-        terminate = true;
-        this.notifyAll();
+        // for (Player player : players){
+        //     player.terminate();
+        // }
+        // for (Player player : players){
+        //     try{
+        //         player.getThread().join(); 
+        //     } catch (InterruptedException e){}
+        // }
+        // terminate = true;
+        // this.notifyAll();
+        for (int i = players.length - 1; i >= 0; i--) 
+            players[i].terminate();
+        terminate = true; 
     }
 
     /**
@@ -173,6 +175,8 @@ public class Dealer implements Runnable {
             // Wait for either a notification or for one second
             wait(1000);
         } catch (InterruptedException e) {}
+
+
     }
 
     private void checkForSet(){
@@ -180,39 +184,32 @@ public class Dealer implements Runnable {
         if (!checkIfSet.isEmpty()) {
             System.out.println("Tamar: -------- "+"checkForSet() : "+" enter first if");
             Integer playrerToCheckId = checkIfSet.poll();
-            for (Player player : players){
-                System.out.println("Tamar: -------- "+"checkForSet() : "+" enter for");
-                if (player.id == playrerToCheckId){
-                    System.out.println("Tamar: -------- "+"checkForSet() : "+" enter second if");
-                    synchronized (player){
-                        // this.setAttempt = player.queuePlayerTokens;
-                        for (Integer token : player.queuePlayerTokens){
-                            this.setAttempt.add(token);
-                        }
-                        int [] cards = new int [setAttempt.size()];
-                        int i = 0;
-                        for (Integer slot : setAttempt){
-                            System.out.println("Tamar: -------- "+"checkForSet() : "+" create cards[]");
-                            cards[i] = table.slotToCard[slot];
-                            i++;
-                        }
-                        this.correctSet = env.util.testSet(cards);
-                        String Tamar = correctSet? "real" : "not real";
-                        System.out.println("Tamar: -------- "+"checkForSet() : "+" the set is "+Tamar);
-                        // player.foundSet = correctSet;
-                        if (correctSet){                         // reward or punish accordingly
-                            player.point();
-                            player.checked = false;
-                        }
-                        else{
-                            player.penalty();
-                            player.checked = true;
-                        }
-                        player.notify();
-                        return;
-                    }
+            Player player = players[playrerToCheckId];
+            int [] cards = new int [env.config.featureSize];
+            int i = 0;
+            synchronized (table){
+                // maybe do a notify? 
+                for (Integer token : player.queuePlayerTokens){
+                    this.setAttempt.add(token);
+                    cards[i] = table.slotToCard[token];
+                    i++;
                 }
             }
+            this.correctSet = env.util.testSet(cards);
+            String Tamar = correctSet? "real" : "not real";
+            System.out.println("Tamar: -------- "+"checkForSet() : "+" the set is "+Tamar);
+            player.foundSet = correctSet;
+            // if (correctSet){                         // reward or punish accordingly
+            //     player.point();
+            //     player.checked = false;
+            // }
+            // else{
+            //     player.penalty();
+            //     player.checked = true;
+            // }
+            player.notify();
+            return;
+            
         } 
     }
 
@@ -243,6 +240,9 @@ public class Dealer implements Runnable {
                     table.removeCard(slot);
                 }
             }
+            for (Player player : players){
+                // player.removeTokens();
+            }
             Collections.shuffle(deck);
         }
     }
@@ -258,24 +258,19 @@ public class Dealer implements Runnable {
                 maxScore = player.score();
             }
         }
-        int winnersCount = 0;
+        ArrayDeque<Player> winnersPlayers = new ArrayDeque<>();
         for (Player player : players){
             if (player.score() == maxScore){
-                winnersCount++;
+                winnersPlayers.add(player);
             }
         }
-
-        int [] winners = new int [winnersCount];
+        int[] winnersID = new int[winnersPlayers.size()];
         int i = 0;
-        for (Player player : players){
-            if (player.score() == maxScore){
-                winners[i] = player.id;
-                i++;
-            }
+        for (Player player : winnersPlayers){
+            winnersID[i] = player.id;
+            i++;
         }
-        env.ui.announceWinner(winners);
-
-        // does this terminate the game without closing the window??????
+        env.ui.announceWinner(winnersID);
     }
 
 }
