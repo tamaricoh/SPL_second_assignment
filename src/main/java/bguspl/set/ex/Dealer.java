@@ -26,7 +26,7 @@ public class Dealer implements Runnable {
      */
     private final Table table;
     private final Player[] players;
-    public ArrayDeque<Integer> checkIfSet; // player that want the dealer to check its set will push its id to here.
+    volatile public ArrayDeque<Integer> checkIfSet; // player that want the dealer to check its set will push its id to here.
     private long timeLoopStarted;
 
     /**
@@ -139,12 +139,11 @@ public class Dealer implements Runnable {
         if (correctSet){
             System.out.println("Tamar: ----- "+"Dealer : "+" removeCardsFromTable() : "+ "inside if");
             System.out.println("Tamar: ----- "+"Dealer : "+" removeCardsFromTable() : "+ setAttempt.size());
-            Iterator<Integer> iterator = setAttempt.iterator();
-            while (iterator.hasNext()) {
-                Integer slot = iterator.next();
-                System.out.println("Tamar: ----- " + "Dealer : " + " removeCardsFromTable() : " + "inside while loop");
-                table.removeCard(slot);
-                iterator.remove(); // Remove the current slot from setAttempt
+            synchronized(table){
+                while (!setAttempt.isEmpty()) {
+                    System.out.println("Tamar: ----- " + "Dealer : " + " removeCardsFromTable() : " + "inside while loop");
+                    table.removeCard(setAttempt.poll());
+                }
             }
             this.correctSet = false;
         }
@@ -158,11 +157,13 @@ public class Dealer implements Runnable {
         int tableSize = env.config.tableSize;
         int size = Math.min(deck.size(), tableSize);
         int numOfCardsOnTable = table.countCards();
-        for (int i = 0 ; i < size &&  numOfCardsOnTable < tableSize ; i++){
-            int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
-            table.placeCard(deck.get(i), avaliableSlot);
-            numOfCardsOnTable++;
-            deck.remove(i);
+        synchronized(table){
+            for (int i = 0 ; i < size &&  numOfCardsOnTable < tableSize ; i++){
+                int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
+                table.placeCard(deck.get(i), avaliableSlot);
+                numOfCardsOnTable++;
+                deck.remove(i);
+            }
         }
     }
 
@@ -199,15 +200,7 @@ public class Dealer implements Runnable {
             String Tamar = correctSet? "real" : "not real";
             System.out.println("Tamar: -------- "+"checkForSet() : "+" the set is "+Tamar);
             player.foundSet = correctSet;
-            // if (correctSet){                         // reward or punish accordingly
-            //     player.point();
-            //     player.checked = false;
-            // }
-            // else{
-            //     player.penalty();
-            //     player.checked = true;
-            // }
-            player.notify();
+            player.checked = true;
             return;
             
         } 
@@ -241,10 +234,10 @@ public class Dealer implements Runnable {
                 }
             }
             for (Player player : players){
-                // player.removeTokens();
+                player.removeTokens();
             }
-            Collections.shuffle(deck);
         }
+        Collections.shuffle(deck);
     }
 
     /**
