@@ -58,8 +58,7 @@ public class Player implements Runnable {
      */
 
      volatile Queue<Integer> queuePlayerTokens;
-
-     public boolean checked; // exists of 3 tokens && dealer checked them
+     private volatile Queue<Integer> playerActions;
      public boolean foundSet;
      Dealer dealer;
     
@@ -80,7 +79,7 @@ public class Player implements Runnable {
         this.human = human;
         terminate = false;
         queuePlayerTokens = new ArrayDeque<>(env.config.featureSize);
-        checked = false;
+        playerActions = new ArrayDeque<>();
         foundSet = false;
     }
 
@@ -95,14 +94,27 @@ public class Player implements Runnable {
         if (!human) createArtificialIntelligence();
 
         while (!terminate) {
-            synchronized(this){
-                while(queuePlayerTokens.size() < env.config.featureSize & !terminate){      //wait for player to select 3 cards
-                    try {
-                        playerThread.wait();
-                    } catch (Exception e){}
+            if(queuePlayerTokens.size() < env.config.featureSize & !terminate){
+                int slot = playerActions.remove();
+                queuePlayerTokens.add(slot);
+                synchronized(table){
+                    table.placeToken(id, slot);
                 }
-                if(!checked & !terminate) notifyDealer();
             }
+            else if(!terminate){
+                dealer.checkIfSet.add(id);
+                dealer.notify();
+                try {
+                    if(!terminate){wait();}
+                } catch (Exception e) {
+                    if(foundSet){point();}
+                    else{penalty();}
+                    synchronized(playerActions){
+                    this.playerActions.clear();
+                    }
+                }
+            }
+           
         }
         if (!human) try { aiThread.join(); } catch (InterruptedException ignored) {}
         env.logger.info("thread " + Thread.currentThread().getName() + " terminated.");
@@ -112,12 +124,12 @@ public class Player implements Runnable {
      * Creates an additional thread for an AI (computer) player. The main loop of this thread repeatedly generates
      * key presses. If the queue of key presses is full, the thread waits until it is not full.
      */
-    private void createArtificialIntelligence() {
+    private void createArtificialIntelligence() { //to update
         // note: this is a very, very smart AI (!)
         aiThread = new Thread(() -> {
             env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
             while (!terminate) {
-                while ((queuePlayerTokens.size() < env.config.featureSize | checked) & !terminate) {
+                while ((queuePlayerTokens.size() < env.config.featureSize) & !terminate) {
                     Random rand = new Random();
                     int randomSlot = rand.nextInt(env.config.tableSize + 1);
                     keyPressed(randomSlot);
@@ -153,35 +165,10 @@ public class Player implements Runnable {
      *
      * @param slot - the slot corresponding to the key pressed.
      */
-    public void keyPressed(int slot) { // sync to table.
+    public void keyPressed(int slot) {
         System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed()");
-        synchronized (table){
-            System.out.println("Tamar: -----" + "thread on key pressed"+Thread.currentThread().getName());
-            Boolean toRemove = false;
-            for(int token : queuePlayerTokens){        // check if the slot was chosen already and remove it if so
-                if(token == slot) {
-                    table.removeToken(id, slot);
-                    toRemove = true;
-                    queuePlayerTokens.remove(token);
-                    checked = false;
-                    continue;
-                }
-            }
-            if(!toRemove && queuePlayerTokens.size() < env.config.featureSize){   //if it's a new slot then add it to the table
-            System.out.println("Tamar: -----" + "inside the first if");
-                queuePlayerTokens.add(slot);
-                table.placeToken(id, slot);
-                checked = false;
-                if(queuePlayerTokens.size() == env.config.featureSize){
-                    System.out.println("Tamar: -----" + "inside the second if");
-                    System.out.println("Tamar: ----- queuePlayerTokens.size() == 3");
-                    try{
-                        dealer.checkIfSet.add(id);
-                        this.notify();
-                    }
-                    catch (Exception e) {}
-                }
-            }
+        synchronized(playerActions){
+        this.playerActions.add(slot);
         }
     }
 
@@ -194,7 +181,6 @@ public class Player implements Runnable {
     public void point() {
         System.out.println("Tamar: ________ "+"Player : "+id+" point()");
         removeTokens();
-        checked = false;
         // int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
         try {
@@ -209,10 +195,12 @@ public class Player implements Runnable {
      */
     public void penalty() {
         System.out.println("Tamar: ________ "+"Player : "+id+" panelty()");
+        removeTokens();
         try {
             env.ui.setFreeze(id, env.config.penaltyFreezeMillis);
             Thread.sleep(env.config.penaltyFreezeMillis); // sleep for 3 seconds
         } catch (InterruptedException e) {}
+        env.ui.setFreeze(id, 0);
     }
 
     public int score() {
@@ -226,25 +214,17 @@ public class Player implements Runnable {
      * @post - the tables doesn't display the player tokens
      * @post - queuePlayerTokens is empty
      */
-    private void removeTokens(){
+    public void removeTokens(){
         System.out.println("Tamar: ________ "+"Player : "+id+" removeTokens()");
-        while(!queuePlayerTokens.isEmpty()){
-            Integer slot = queuePlayerTokens.remove();
-            table.removeToken(id, slot);
+        synchronized(table){
+            while(!queuePlayerTokens.isEmpty()){
+                table.removeToken(id, queuePlayerTokens.remove());
+            }
+            synchronized(playerActions){
+                this.playerActions.clear();
+            }
         }
-    }
-
-    private void notifyDealer(){
-        System.out.println("Tamar: ________ "+"Player : "+id+" notifyDealer()");
-        synchronized (table) {
-            Thread thread = Thread.currentThread(); 
-            try {
-                thread.wait();
-            } catch (Exception e) {dealer.notify();}
-        }
-        // try {
-        //     thread.wait();
-        // } catch (Exception e){}
+        
     }
 
     public Thread getThread(){
