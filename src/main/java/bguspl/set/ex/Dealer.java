@@ -142,7 +142,15 @@ public class Dealer implements Runnable {
             synchronized(table){
                 while (!setAttempt.isEmpty()) {
                     System.out.println("Tamar: ----- " + "Dealer : " + " removeCardsFromTable() : " + "inside while loop");
-                    table.removeCard(setAttempt.poll());
+                    int slot = setAttempt.poll();
+                    table.removeCard(slot);
+                    for (Player player : players){
+                        synchronized (player.queuePlayerTokens){
+                            if(player.queuePlayerTokens.remove(slot)){
+                                checkIfSet.remove(player.id);
+                            }
+                        }
+                    }
                 }
             }
             this.correctSet = false;
@@ -237,6 +245,7 @@ public class Dealer implements Runnable {
             for (Player player : players){
                 player.removeTokens();
             }
+            checkIfSet.clear();
         }
         Collections.shuffle(deck);
     }
