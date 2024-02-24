@@ -189,8 +189,8 @@ public class Dealer implements Runnable {
             int [] cards = new int [env.config.featureSize];
             int i = 0;
             synchronized (player.queuePlayerTokens){
+                this.setAttempt =  player.queuePlayerTokens;
                 for (Integer token : player.queuePlayerTokens){
-                    this.setAttempt.add(token);
                     synchronized(table){
                         cards[i] = table.slotToCard[token];
                     }
