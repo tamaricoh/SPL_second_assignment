@@ -101,11 +101,26 @@ public class Player implements Runnable {
             } catch (Exception e) {
             }}
             if(queuePlayerTokens.size() < env.config.featureSize & !terminate){
-                System.out.println();
+                System.out.println("tamar: __________________ player " + id + "queuePlayerTokens size is " + queuePlayerTokens.size());
                 int slot = playerActions.remove();
-                queuePlayerTokens.add(slot);
-                synchronized(table){
-                    table.placeToken(id, slot);
+                boolean toRemove;
+                synchronized(queuePlayerTokens){
+                    toRemove = queuePlayerTokens.remove(slot);
+                }
+
+                if (!toRemove) {
+                    synchronized(queuePlayerTokens){
+                        queuePlayerTokens.add(slot);
+                    }
+                    synchronized(table){
+                        table.placeToken(id, slot);
+                    }
+                }
+                else {
+                    System.out.println("tamar: __________________ player " + id + "queuePlayerTokens contains the slot to remove " + queuePlayerTokens.contains(slot));
+                    synchronized(table){
+                        table.removeToken(id, slot);
+                    }
                 }
                 System.out.println("Tamar: ----- player "+ id +":  queueplayertoken size is:" + queuePlayerTokens.size());
             }
@@ -113,12 +128,13 @@ public class Player implements Runnable {
                 System.out.println("Tamar:_______________player" + id + "ask for checkset");
                 dealer.checkIfSet.add(id);
                 //dealer.notify();
-                while(!checked){}
-                if(foundSet){point();}
+                while(!checked){}                       //1 player choosed an incorrect set ->> found set  = false, checked = true;
+                if(foundSet){point();}                  //2 player chooses another incorrect set -->
                 else{penalty();}
                 synchronized(playerActions){
                 this.playerActions.clear();
                 }
+                checked = false;
             }
            
         }
@@ -204,8 +220,10 @@ public class Player implements Runnable {
         System.out.println("Tamar: ________ "+"Player : "+id+" panelty()");
         removeTokens();
         try {
-            env.ui.setFreeze(id, env.config.penaltyFreezeMillis);
-            Thread.sleep(env.config.penaltyFreezeMillis); // sleep for 3 seconds
+            for(long i = env.config.penaltyFreezeMillis/1000; 0< i; i--){ // sleep for 3 seconds
+                env.ui.setFreeze(id, i * 1000);
+                Thread.sleep(1000); // sleep for 3 seconds
+            }
         } catch (InterruptedException e) {}
         env.ui.setFreeze(id, 0);
     }
