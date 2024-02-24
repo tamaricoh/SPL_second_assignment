@@ -59,7 +59,8 @@ public class Player implements Runnable {
 
      volatile Queue<Integer> queuePlayerTokens;
      private volatile Queue<Integer> playerActions;
-     public boolean foundSet;
+     volatile public boolean foundSet;
+     volatile boolean checked;
      Dealer dealer;
     
      /**
@@ -94,24 +95,29 @@ public class Player implements Runnable {
         if (!human) createArtificialIntelligence();
 
         while (!terminate) {
+            while(playerActions.size() == 0){
+                try { wait(1000);
+                
+            } catch (Exception e) {
+            }}
             if(queuePlayerTokens.size() < env.config.featureSize & !terminate){
+                System.out.println();
                 int slot = playerActions.remove();
                 queuePlayerTokens.add(slot);
                 synchronized(table){
                     table.placeToken(id, slot);
                 }
+                System.out.println("Tamar: ----- player "+ id +":  queueplayertoken size is:" + queuePlayerTokens.size());
             }
-            else if(!terminate){
+            if ((queuePlayerTokens.size() == env.config.featureSize)){
+                System.out.println("Tamar:_______________player" + id + "ask for checkset");
                 dealer.checkIfSet.add(id);
-                dealer.notify();
-                try {
-                    if(!terminate){wait();}
-                } catch (Exception e) {
-                    if(foundSet){point();}
-                    else{penalty();}
-                    synchronized(playerActions){
-                    this.playerActions.clear();
-                    }
+                //dealer.notify();
+                while(!checked){}
+                if(foundSet){point();}
+                else{penalty();}
+                synchronized(playerActions){
+                this.playerActions.clear();
                 }
             }
            
@@ -188,6 +194,7 @@ public class Player implements Runnable {
             Thread.sleep(env.config.pointFreezeMillis); // sleeps for 1 sec
         } catch (InterruptedException e) {}
         env.ui.setFreeze(id, 0);
+        foundSet = false;
     }
 
     /**
@@ -220,6 +227,7 @@ public class Player implements Runnable {
             while(!queuePlayerTokens.isEmpty()){
                 table.removeToken(id, queuePlayerTokens.remove());
             }
+            System.out.println("remove tokens after removing from player tokents " + queuePlayerTokens.size());
             synchronized(playerActions){
                 this.playerActions.clear();
             }

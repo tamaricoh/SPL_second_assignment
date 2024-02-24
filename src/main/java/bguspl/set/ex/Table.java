@@ -82,7 +82,7 @@ public class Table {
      *
      * @return - the number of cards on the table.
      */
-    public int countCards() {
+    public synchronized int countCards() {
         int cards = 0;
         for (Integer card : slotToCard)
             if (card != null)
@@ -90,7 +90,7 @@ public class Table {
         return cards;
     }
 
-    public int avaliableSlot(){
+    public synchronized int avaliableSlot(){
         for (int i = 0 ; i < slotToCard.length ; i++){
             if (slotToCard[i] == null){
                 return i;
@@ -106,7 +106,7 @@ public class Table {
      *
      * @post - the card placed is on the table, in the assigned slot.
      */
-    public void placeCard(int card, int slot) {
+    public synchronized void placeCard(int card, int slot) {
         try {
             Thread.sleep(env.config.tableDelayMillis);
         } catch (InterruptedException ignored) {}
@@ -123,7 +123,7 @@ public class Table {
      * Removes a card from a grid slot on the table.
      * @param slot - the slot from which to remove the card.
      */
-    public void removeCard(int slot) {
+    public synchronized void removeCard(int slot) {
         System.out.println("Tamar: ----- "+"Table : "+" removeCard() : "+ "from slot " +slot);
         try {
             Thread.sleep(env.config.tableDelayMillis);
@@ -143,7 +143,7 @@ public class Table {
      * @param player - the player the token belongs to.
      * @param slot   - the slot on which to place the token.
      */
-    public void placeToken(int player, int slot) {
+    public synchronized void placeToken(int player, int slot) {
         // place token - UI
         env.ui.placeToken(player, slot);
         playerTokens[slot][player] = player;
@@ -156,7 +156,7 @@ public class Table {
      * @param slot   - the slot from which to remove the token.
      * @return       - true iff a token was successfully removed.
      */
-    public boolean removeToken(int player, int slot) {
+    public synchronized boolean removeToken(int player, int slot) {
         // remove token - UI
         boolean placedToken = (playerTokens[slot][player] == player);
         env.ui.removeToken(player, slot);
@@ -164,7 +164,7 @@ public class Table {
         return placedToken;
     }
 
-    private Integer[][] makeDefaultarray(){
+    private synchronized Integer[][] makeDefaultarray(){
         playerTokens = new Integer[env.config.tableSize][env.config.players];
         for (int i = 0; i < env.config.tableSize; i++){
             for (int j = 0; j < env.config.players; j++){
