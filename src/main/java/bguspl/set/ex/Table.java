@@ -86,7 +86,7 @@ public class Table {
         int cards = 0;
         for (Integer card : slotToCard)
             if (card != null)
-                ++cards;
+                cards++;
         return cards;
     }
 

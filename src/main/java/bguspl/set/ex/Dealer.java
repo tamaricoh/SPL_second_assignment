@@ -164,16 +164,20 @@ public class Dealer implements Runnable {
      * Check if any cards can be removed from the deck and placed on the table.
      */
     private void placeCardsOnTable() {
+        synchronized(table){
         System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" Deck size : "+ deck.size());
         int tableSize = env.config.tableSize;
         int size = Math.min(deck.size(), tableSize);
+        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ---------------- tableSize : "+ tableSize);
+        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ---------------- size : "+ size);
         int numOfCardsOnTable = table.countCards();
-        synchronized(table){
+        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  numOfCardsOnTable: "+ numOfCardsOnTable);
+        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  tableSize: "+ tableSize);
             for (int i = 0 ; i < size &&  numOfCardsOnTable < tableSize ; i++){
+                System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  numOfCardsOnTable: "+ numOfCardsOnTable);
                 int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
-                table.placeCard(deck.get(i), avaliableSlot);
+                table.placeCard(deck.remove(i), avaliableSlot);
                 numOfCardsOnTable++;
-                deck.remove(i);
             }
         }
     }
