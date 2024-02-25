@@ -57,10 +57,13 @@ public class Player implements Runnable {
      * The queue keeping  the key presses that a player did.
      */
 
-     volatile Queue<Integer> queuePlayerTokens;
+     volatile ArrayDeque<Integer> queuePlayerTokens;
      private volatile Queue<Integer> playerActions;
      volatile public boolean foundSet;
-     volatile boolean checked;
+     volatile boolean waitForDealreAnswer; // the player sent a set to the dealer
+     volatile boolean dealerAnswer; // true if the dealer checked the set, false if the dealer could nou check the set because another player took it
+    //  volatile boolean waitForDealreAnswer; // this player asked the dealer to check a set and the dealer handled it.
+    //  volatile boolean setNoLongerAvaliable; // 
      Dealer dealer;
     
      /**
@@ -82,6 +85,9 @@ public class Player implements Runnable {
         queuePlayerTokens = new ArrayDeque<>(env.config.featureSize);
         playerActions = new ArrayDeque<>();
         foundSet = false;
+        waitForDealreAnswer = false;
+        dealerAnswer = false;
+        
     }
 
     /**
@@ -97,9 +103,8 @@ public class Player implements Runnable {
         while (!terminate) {
             while(playerActions.size() == 0){
                 try { wait(1000);
-                
-            } catch (Exception e) {
-            }}
+                } catch (Exception e) {}
+            }
             if(queuePlayerTokens.size() < env.config.featureSize & !terminate){
                 System.out.println("tamar: __________________ player " + id + "queuePlayerTokens size is " + queuePlayerTokens.size());
                 int slot = playerActions.remove();
@@ -128,13 +133,20 @@ public class Player implements Runnable {
                 System.out.println("Tamar:_______________player" + id + "ask for checkset");
                 dealer.checkIfSet.add(id);
                 //dealer.notify();
-                while(!checked){}                       //1 player choosed an incorrect set ->> found set  = false, checked = true;
-                if(foundSet){point();}                  //2 player chooses another incorrect set -->
-                else{penalty();}
-                synchronized(playerActions){
-                this.playerActions.clear();
+                while(!waitForDealreAnswer){}                       //1 player choosed an incorrect set ->> found set  = false, waitForDealreAnswer = true;
+                if (dealerAnswer){
+                    if(foundSet){
+                        point();
+                    }                  //2 player chooses another incorrect set -->
+                    else{
+                        penalty();
+                    }
+                    dealerAnswer = false;
                 }
-                checked = false;
+                synchronized(playerActions){
+                    this.playerActions.clear();
+                }
+                waitForDealreAnswer = false;
             }
            
         }

@@ -136,10 +136,11 @@ public class Dealer implements Runnable {
      */
     private void removeCardsFromTable() {
         System.out.println("Tamar: ________ "+"Dealer : "+" removeCardsFromTable()");
+        synchronized(table){
         if (correctSet){
             System.out.println("Tamar: ----- "+"Dealer : "+" removeCardsFromTable() : "+ "inside if");
             System.out.println("Tamar: ----- "+"Dealer : "+" removeCardsFromTable() : "+ setAttempt.size());
-            synchronized(table){
+            // synchronized(table){
                 while (!setAttempt.isEmpty()) {
                     System.out.println("Tamar: ----- " + "Dealer : " + " removeCardsFromTable() : " + "inside while loop");
                     int slot = setAttempt.poll();
@@ -148,6 +149,8 @@ public class Dealer implements Runnable {
                         synchronized (player.queuePlayerTokens){
                             if(player.queuePlayerTokens.remove(slot)){
                                 checkIfSet.remove(player.id);
+                                player.waitForDealreAnswer = true;
+                                
                             }
                         }
                     }
@@ -161,7 +164,7 @@ public class Dealer implements Runnable {
      * Check if any cards can be removed from the deck and placed on the table.
      */
     private void placeCardsOnTable() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()");
+        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" Deck size : "+ deck.size());
         int tableSize = env.config.tableSize;
         int size = Math.min(deck.size(), tableSize);
         int numOfCardsOnTable = table.countCards();
@@ -197,9 +200,10 @@ public class Dealer implements Runnable {
             int [] cards = new int [env.config.featureSize];
             int i = 0;
             synchronized (player.queuePlayerTokens){
-                this.setAttempt =  player.queuePlayerTokens;
+                this.setAttempt =  player.queuePlayerTokens.clone();
                 for (Integer token : player.queuePlayerTokens){
                     synchronized(table){
+                        // setAttempt.add(token);
                         cards[i] = table.slotToCard[token];
                     }
                     i++;
@@ -209,7 +213,8 @@ public class Dealer implements Runnable {
             String Tamar = correctSet? "real" : "not real";
             System.out.println("Tamar: -------- "+"checkForSet() : "+" the set is "+Tamar);
             player.foundSet = correctSet;
-            player.checked = true;
+            player.waitForDealreAnswer = true;
+            player.dealerAnswer = true;
             return;
             
         } 
