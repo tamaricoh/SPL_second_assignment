@@ -217,8 +217,9 @@ public class Dealer implements Runnable {
      * Reset and/or update the countdown and the countdown display.
      */
     private void updateTimerDisplay(boolean reset) {
-        System.out.println("Tamar: ________ "+"Dealer : "+" updateTimerDisplay()");
-        boolean needWarning = (env.config.turnTimeoutWarningMillis >= System.currentTimeMillis());
+        System.out.println("Tamar: ____ "+"Dealer : "+" updateTimerDisplay()");
+        long currentTime = System.currentTimeMillis();
+        boolean needWarning = (env.config.turnTimeoutWarningMillis >= env.config.turnTimeoutMillis-currentTime+timeLoopStarted) & !reset;
         if (reset){
             env.ui.setCountdown(env.config.turnTimeoutMillis, needWarning);
             return;
