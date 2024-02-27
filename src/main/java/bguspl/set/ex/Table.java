@@ -2,11 +2,9 @@ package bguspl.set.ex;
 
 import bguspl.set.Env;
 
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.stream.Collectors;
 
 /**
@@ -124,7 +122,6 @@ public class Table {
      * @param slot - the slot from which to remove the card.
      */
     public synchronized void removeCard(int slot) {
-        System.out.println("Tamar: ----- "+"Table : "+" removeCard() : "+ "from slot " +slot);
         try {
             Thread.sleep(env.config.tableDelayMillis);
         } catch (InterruptedException ignored) {}

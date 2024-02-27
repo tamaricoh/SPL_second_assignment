@@ -3,13 +3,10 @@ package bguspl.set.ex;
 import bguspl.set.Env;
 import java.util.Queue;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.Iterator;
 
 /**
  * This class manages the dealer's threads and data
@@ -70,7 +67,6 @@ public class Dealer implements Runnable {
      */
     @Override
     public void run() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" run()");
         env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
         
         for (Player player : players) {
@@ -93,7 +89,6 @@ public class Dealer implements Runnable {
      * The inner loop of the dealer thread that runs as long as the countdown did not time out.
      */
     private void timerLoop() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" timerLoop()");
         this.timeLoopStarted = System.currentTimeMillis();
         while (!terminate && System.currentTimeMillis() < timeLoopStarted + reshuffleTime) { 
             sleepUntilWokenOrTimeout(); // rest or check set
@@ -109,7 +104,6 @@ public class Dealer implements Runnable {
      * Called when the game should be terminated.
      */
     public void terminate() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" terminate()");
         for (int i = players.length - 1; i >= 0; i--) 
             players[i].terminate();
         terminate = true; 
@@ -121,7 +115,6 @@ public class Dealer implements Runnable {
      * @return true iff the game should be finished.
      */
     private boolean shouldFinish() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" shoulFinish()");
         return terminate || env.util.findSets(deck, 1).size() == 0;
     }
 
@@ -129,17 +122,14 @@ public class Dealer implements Runnable {
      * Checks cards should be removed from the table and removes them.
      */
     private void removeCardsFromTable() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" removeCardsFromTable()");
         synchronized(table){
         if (correctSet){
                 while (!setAttempt.isEmpty()) {
                     int slot = setAttempt.poll();
                     table.removeCard(slot);
                     for (Player player : players){
-                        System.out.println("Tamar: ________ -------"+"Dealer : "+" removeCardsFromTable() : player id !!!!!!!! " + player.id);
                         synchronized (player.queuePlayerTokens){
                             if(player.id != playerToCheckID && player.queuePlayerTokens.remove(slot)){
-                                System.out.println("Tamar: ________ "+"Dealer : "+" removeCardsFromTable() : player id " + player.id);
                                 checkIfSet.remove(player.id);
                                 player.waitForDealreAnswer = true;
                             }
@@ -155,7 +145,6 @@ public class Dealer implements Runnable {
      * Check if any cards can be removed from the deck and placed on the table.
      */
     private void placeCardsOnTable() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()");
         synchronized(table){
         int tableSize = env.config.tableSize;
         int size = Math.min(deck.size(), tableSize);
@@ -172,7 +161,6 @@ public class Dealer implements Runnable {
      * Sleep for a fixed amount of time or until the thread is awakened for some purpose.
      */
     private synchronized void sleepUntilWokenOrTimeout() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" sleepUntilWokenOrTimeout()");
         try {
             // Wait for either a notification or for one second
             wait(1000);
@@ -182,7 +170,6 @@ public class Dealer implements Runnable {
     }
 
     private void checkForSet(){
-        System.out.println("Tamar: ________ "+"Dealer : "+" checkForSet()");
         if (!checkIfSet.isEmpty()) {
             playerToCheckID = checkIfSet.poll();
             Player player = players[playerToCheckID];
@@ -211,7 +198,6 @@ public class Dealer implements Runnable {
      * Reset and/or update the countdown and the countdown display.
      */
     private void updateTimerDisplay(boolean reset) {
-        System.out.println("Tamar: ____ "+"Dealer : "+" updateTimerDisplay()");
         long currentTime = System.currentTimeMillis();
         boolean needWarning = (env.config.turnTimeoutWarningMillis >= env.config.turnTimeoutMillis-currentTime+timeLoopStarted) & !reset;
         if (reset){
@@ -225,7 +211,6 @@ public class Dealer implements Runnable {
      * Returns all the cards from the table to the deck.
      */
     private void removeAllCardsFromTable() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" removeAllCardsFromTable()");
         // Collecting the cards back from the table when needed (after a minute or when there are no sets on the table)
         synchronized (table) {
             for ( Integer slot : table.cardToSlot){
@@ -250,7 +235,6 @@ public class Dealer implements Runnable {
      * Check who is/are the winner/s and displays them.
      */
     private void announceWinners() {
-        System.out.println("Tamar: ________ "+"Dealer : "+" announceWinners()");
         int maxScore = Integer.MIN_VALUE;
         for (Player player : players){
             if (player.score() > maxScore){
