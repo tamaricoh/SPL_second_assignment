@@ -135,7 +135,7 @@ public class Player implements Runnable {
                 System.out.println("Tamar:_______________player" + id + "ask for checkset");
                 dealer.checkIfSet.add(id);
                 //dealer.notify();
-                while(!waitForDealreAnswer & !terminate){}                       //1 player choosed an incorrect set ->> found set  = false, waitForDealreAnswer = true;
+                while(!waitForDealreAnswer & !terminate){}     //1 player choosed an incorrect set ->> found set  = false, waitForDealreAnswer = true;
                 if (dealerAnswer){
                     if(foundSet){
                         point();
@@ -165,15 +165,11 @@ public class Player implements Runnable {
         aiThread = new Thread(() -> {
             env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
             while (!terminate) {
-                try {
-                    wait(1000);
-                    System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + "wait");
-                } catch (Exception e) {}
-                if ((playerActions.size() < env.config.featureSize) & !terminate) {
+                if ((playerActions.size() < env.config.featureSize) & !waitForDealreAnswer & !terminate) {
                     System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + playerActions.size() +" < "+env.config.featureSize);
-                    System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + "ai choose card");
                     Random rand = new Random();
                     int randomSlot = rand.nextInt(env.config.tableSize);
+                    System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + "ai choose card " + randomSlot);
                     keyPressed(randomSlot);
                 }
             }
@@ -197,13 +193,13 @@ public class Player implements Runnable {
      */
     public void keyPressed(int slot) {
         System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed()");
-        synchronized(playerActions){
-            // synchronized(table){
+        synchronized(table){
+            synchronized(playerActions){
                 if(table.slotToCard[slot] != null){
                     System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed() "+ "add the token");
                     this.playerActions.add(slot);
                 }  
-            // }
+            }
         }
     }
 
