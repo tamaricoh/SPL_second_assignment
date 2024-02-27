@@ -135,7 +135,7 @@ public class Player implements Runnable {
                 System.out.println("Tamar:_______________player" + id + "ask for checkset");
                 dealer.checkIfSet.add(id);
                 //dealer.notify();
-                while(!waitForDealreAnswer){}                       //1 player choosed an incorrect set ->> found set  = false, waitForDealreAnswer = true;
+                while(!waitForDealreAnswer & !terminate){}                       //1 player choosed an incorrect set ->> found set  = false, waitForDealreAnswer = true;
                 if (dealerAnswer){
                     if(foundSet){
                         point();
@@ -165,9 +165,12 @@ public class Player implements Runnable {
         aiThread = new Thread(() -> {
             env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
             while (!terminate) {
-                while ((queuePlayerTokens.size() < env.config.featureSize) & !terminate) {
+                try {
+                    wait(1000);
+                } catch (Exception e) {}
+                if ((queuePlayerTokens.size() < env.config.featureSize) & !terminate) {
                     Random rand = new Random();
-                    int randomSlot = rand.nextInt(env.config.tableSize + 1);
+                    int randomSlot = rand.nextInt(env.config.tableSize);
                     keyPressed(randomSlot);
                 }
             }
@@ -182,7 +185,6 @@ public class Player implements Runnable {
     public void terminate() {
         System.out.println("Tamar: ________ "+"Player : "+id+" terminate()");
         terminate = true;
-        waitForDealreAnswer = true;
         /**
          * When the user clicks the close window button, the class WindowManager that we provided you
          * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
@@ -202,8 +204,10 @@ public class Player implements Runnable {
     public void keyPressed(int slot) {
         System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed()");
         synchronized(playerActions){
-            if(table.slotToCard[slot] != null){
-                this.playerActions.add(slot);
+            synchronized(table){
+                if(table.slotToCard[slot] != null){
+                    this.playerActions.add(slot);
+                }  
             }
         }
     }
