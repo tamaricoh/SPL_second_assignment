@@ -115,10 +115,12 @@ public class Player implements Runnable {
 
                 if (!toRemove) {
                     synchronized(queuePlayerTokens){
-                        queuePlayerTokens.add(slot);
-                    }
-                    synchronized(table){
-                        table.placeToken(id, slot);
+                        synchronized(table){
+                            if(table.slotToCard[slot] != null){
+                            queuePlayerTokens.add(slot);
+                            table.placeToken(id, slot);
+                            }
+                        }
                     }
                 }
                 else {
@@ -180,9 +182,7 @@ public class Player implements Runnable {
     public void terminate() {
         System.out.println("Tamar: ________ "+"Player : "+id+" terminate()");
         terminate = true;
-        synchronized (this){
-            this.notifyAll();
-        }
+        waitForDealreAnswer = true;
         /**
          * When the user clicks the close window button, the class WindowManager that we provided you
          * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
@@ -202,7 +202,9 @@ public class Player implements Runnable {
     public void keyPressed(int slot) {
         System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed()");
         synchronized(playerActions){
-        this.playerActions.add(slot);
+            if(table.slotToCard[slot] != null){
+                this.playerActions.add(slot);
+            }
         }
     }
 

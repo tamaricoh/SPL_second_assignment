@@ -59,6 +59,7 @@ public class Dealer implements Runnable {
         this.correctSet = false;
         this.terminate = false;
         this.reshuffleTime = env.config.turnTimeoutMillis;
+        Collections.shuffle(deck);
     }
 
     /**
@@ -172,11 +173,11 @@ public class Dealer implements Runnable {
         System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ---------------- size : "+ size);
         int numOfCardsOnTable = table.countCards();
         System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  numOfCardsOnTable: "+ numOfCardsOnTable);
-        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  tableSize: "+ tableSize);
             for (int i = 0 ; i < size &&  numOfCardsOnTable < tableSize ; i++){
                 System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  numOfCardsOnTable: "+ numOfCardsOnTable);
+                System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  decksize: "+ deck.size());
                 int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
-                table.placeCard(deck.remove(i), avaliableSlot);
+                table.placeCard(deck.remove(0), avaliableSlot);
                 numOfCardsOnTable++;
             }
         }
@@ -207,7 +208,6 @@ public class Dealer implements Runnable {
                 this.setAttempt =  player.queuePlayerTokens.clone();
                 for (Integer token : player.queuePlayerTokens){
                     synchronized(table){
-                        // setAttempt.add(token);
                         cards[i] = table.slotToCard[token];
                     }
                     i++;
