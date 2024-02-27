@@ -1,7 +1,6 @@
 package bguspl.set.ex;
 import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.Iterator;
 import bguspl.set.Env;
 import java.util.Random;
 
@@ -95,7 +94,6 @@ public class Player implements Runnable {
      */
     @Override
     public void  run() {
-        System.out.println("Tamar: ________ "+"Player : "+id+" run()");
         playerThread = Thread.currentThread();
         env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
         if (!human) createArtificialIntelligence();
@@ -106,7 +104,6 @@ public class Player implements Runnable {
                 } catch (Exception e) {}
             }
             if(queuePlayerTokens.size() < env.config.featureSize & !terminate){
-                System.out.println("tamar: __________________ player " + id + "queuePlayerTokens size is " + queuePlayerTokens.size());
                 int slot = playerActions.remove();
                 boolean toRemove;
                 synchronized(queuePlayerTokens){
@@ -124,22 +121,18 @@ public class Player implements Runnable {
                     }
                 }
                 else {
-                    System.out.println("tamar: __________________ player " + id + "queuePlayerTokens contains the slot to remove " + queuePlayerTokens.contains(slot));
                     synchronized(table){
                         table.removeToken(id, slot);
                     }
                 }
-                System.out.println("Tamar: ----- player "+ id +":  queueplayertoken size is:" + queuePlayerTokens.size());
             }
             if ((queuePlayerTokens.size() == env.config.featureSize)){
-                System.out.println("Tamar:_______________player" + id + "ask for checkset");
                 dealer.checkIfSet.add(id);
-                //dealer.notify();
-                while(!waitForDealreAnswer & !terminate){}     //1 player choosed an incorrect set ->> found set  = false, waitForDealreAnswer = true;
+                while(!waitForDealreAnswer & !terminate){}
                 if (dealerAnswer){
                     if(foundSet){
                         point();
-                    }                  //2 player chooses another incorrect set -->
+                    }           
                     else{
                         penalty();
                     }
@@ -166,10 +159,8 @@ public class Player implements Runnable {
             env.logger.info("thread " + Thread.currentThread().getName() + " starting.");
             while (!terminate) {
                 if ((playerActions.size() < env.config.featureSize) & !waitForDealreAnswer & !terminate) {
-                    System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + playerActions.size() +" < "+env.config.featureSize);
                     Random rand = new Random();
                     int randomSlot = rand.nextInt(env.config.tableSize);
-                    System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + "ai choose card " + randomSlot);
                     keyPressed(randomSlot);
                 }
             }
@@ -182,7 +173,6 @@ public class Player implements Runnable {
      * Called when the game should be terminated.
      */
     public void terminate() {
-        System.out.println("Tamar: ________ "+"Player : "+id+" terminate()");
         terminate = true;
     }
 
@@ -192,11 +182,9 @@ public class Player implements Runnable {
      * @param slot - the slot corresponding to the key pressed.
      */
     public void keyPressed(int slot) {
-        System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed()");
         synchronized(table){
             synchronized(playerActions){
                 if(table.slotToCard[slot] != null){
-                    System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed() "+ "add the token");
                     this.playerActions.add(slot);
                 }  
             }
@@ -210,9 +198,8 @@ public class Player implements Runnable {
      * @post - the player's score is updated in the ui.
      */
     public void point() {
-        System.out.println("Tamar: ________ "+"Player : "+id+" point()");
         removeTokens();
-        // int ignored = table.countCards(); // this part is just for demonstration in the unit tests
+        int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
         try {
             for(long i = env.config.pointFreezeMillis/1000; 0< i; i--){
@@ -228,10 +215,9 @@ public class Player implements Runnable {
      * Penalize a player and perform other related actions.
      */
     public void penalty() {
-        System.out.println("Tamar: ________ "+"Player : "+id+" panelty()");
         removeTokens();
         try {
-            for(long i = env.config.penaltyFreezeMillis/1000; 0< i; i--){ // sleep for 3 seconds
+            for(long i = env.config.penaltyFreezeMillis/1000; 0< i; i--){ // sleep for a few seconds
                 env.ui.setFreeze(id, i * 1000);
                 Thread.sleep(1000); // sleep for 3 seconds
             }
@@ -240,7 +226,6 @@ public class Player implements Runnable {
     }
 
     public int score() {
-        System.out.println("Tamar: ________ "+"Player : "+id+" score()");
         return score;
     }
 
@@ -251,7 +236,6 @@ public class Player implements Runnable {
      * @post - queuePlayerTokens is empty
      */
     public void removeTokens(){
-        System.out.println("Tamar: ________ "+"Player : "+id+" removeTokens()");
         synchronized(table){
             synchronized(queuePlayerTokens){
                 while(!queuePlayerTokens.isEmpty()){
@@ -263,10 +247,5 @@ public class Player implements Runnable {
             }
         }
         
-    }
-
-    public Thread getThread(){
-        System.out.println("Tamar: ________ "+"Player : "+id+" getThread()");
-        return playerThread;
     }
 }
