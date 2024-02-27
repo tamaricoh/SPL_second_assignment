@@ -215,8 +215,10 @@ public class Player implements Runnable {
         // int ignored = table.countCards(); // this part is just for demonstration in the unit tests
         env.ui.setScore(id, ++score);
         try {
-            env.ui.setFreeze(id, env.config.pointFreezeMillis);
-            Thread.sleep(env.config.pointFreezeMillis); // sleeps for 1 sec
+            for(long i = env.config.pointFreezeMillis/1000; 0< i; i--){
+                env.ui.setFreeze(id, i * 1000);
+                Thread.sleep(1000); // sleep for 3 seconds
+            }
         } catch (InterruptedException e) {}
         env.ui.setFreeze(id, 0);
         foundSet = false;
@@ -251,8 +253,10 @@ public class Player implements Runnable {
     public void removeTokens(){
         System.out.println("Tamar: ________ "+"Player : "+id+" removeTokens()");
         synchronized(table){
-            while(!queuePlayerTokens.isEmpty()){
-                table.removeToken(id, queuePlayerTokens.remove());
+            synchronized(queuePlayerTokens){
+                while(!queuePlayerTokens.isEmpty()){
+                    table.removeToken(id, queuePlayerTokens.remove());
+                }
             }
             synchronized(playerActions){
                 this.playerActions.clear();
