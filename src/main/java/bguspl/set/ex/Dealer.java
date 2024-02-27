@@ -49,6 +49,8 @@ public class Dealer implements Runnable {
      */
     private long reshuffleTime = Long.MAX_VALUE;
 
+    private int playerToCheckID;
+
     public Dealer(Env env, Table table, Player[] players) {
         this.env = env;
         this.table = table;
@@ -59,7 +61,8 @@ public class Dealer implements Runnable {
         this.correctSet = false;
         this.terminate = false;
         this.reshuffleTime = env.config.turnTimeoutMillis;
-        // Collections.shuffle(deck);
+        this.playerToCheckID = -1;
+        Collections.shuffle(deck);
     }
 
     /**
@@ -107,16 +110,6 @@ public class Dealer implements Runnable {
      */
     public void terminate() {
         System.out.println("Tamar: ________ "+"Dealer : "+" terminate()");
-        // for (Player player : players){
-        //     player.terminate();
-        // }
-        // for (Player player : players){
-        //     try{
-        //         player.getThread().join(); 
-        //     } catch (InterruptedException e){}
-        // }
-        // terminate = true;
-        // this.notifyAll();
         for (int i = players.length - 1; i >= 0; i--) 
             players[i].terminate();
         terminate = true; 
@@ -143,11 +136,12 @@ public class Dealer implements Runnable {
                     int slot = setAttempt.poll();
                     table.removeCard(slot);
                     for (Player player : players){
+                        System.out.println("Tamar: ________ -------"+"Dealer : "+" removeCardsFromTable() : player id !!!!!!!! " + player.id);
                         synchronized (player.queuePlayerTokens){
-                            if(player.queuePlayerTokens.remove(slot)){
+                            if(player.id != playerToCheckID && player.queuePlayerTokens.remove(slot)){
+                                System.out.println("Tamar: ________ "+"Dealer : "+" removeCardsFromTable() : player id " + player.id);
                                 checkIfSet.remove(player.id);
                                 player.waitForDealreAnswer = true;
-                                
                             }
                         }
                     }
@@ -190,8 +184,8 @@ public class Dealer implements Runnable {
     private void checkForSet(){
         System.out.println("Tamar: ________ "+"Dealer : "+" checkForSet()");
         if (!checkIfSet.isEmpty()) {
-            Integer playrerToCheckId = checkIfSet.poll();
-            Player player = players[playrerToCheckId];
+            playerToCheckID = checkIfSet.poll();
+            Player player = players[playerToCheckID];
             int [] cards = new int [env.config.featureSize];
             int i = 0;
             synchronized (player.queuePlayerTokens){
@@ -217,13 +211,14 @@ public class Dealer implements Runnable {
      * Reset and/or update the countdown and the countdown display.
      */
     private void updateTimerDisplay(boolean reset) {
-        System.out.println("Tamar: ________ "+"Dealer : "+" updateTimerDisplay()");
-        boolean needWarning = (env.config.turnTimeoutWarningMillis >= System.currentTimeMillis());
+        System.out.println("Tamar: ____ "+"Dealer : "+" updateTimerDisplay()");
+        long currentTime = System.currentTimeMillis();
+        boolean needWarning = (env.config.turnTimeoutWarningMillis >= env.config.turnTimeoutMillis-currentTime+timeLoopStarted) & !reset;
         if (reset){
             env.ui.setCountdown(env.config.turnTimeoutMillis, needWarning);
             return;
         }
-        env.ui.setCountdown(reshuffleTime-System.currentTimeMillis()+timeLoopStarted, needWarning);
+        env.ui.setCountdown(Math.max(reshuffleTime-System.currentTimeMillis()+timeLoopStarted,0), needWarning);
     }
 
     /**
@@ -248,7 +243,7 @@ public class Dealer implements Runnable {
             }
             checkIfSet.clear();
         }
-        // Collections.shuffle(deck);
+        Collections.shuffle(deck);
     }
 
     /**
