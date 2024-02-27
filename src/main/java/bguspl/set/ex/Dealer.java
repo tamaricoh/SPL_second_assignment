@@ -218,7 +218,7 @@ public class Dealer implements Runnable {
             env.ui.setCountdown(env.config.turnTimeoutMillis, needWarning);
             return;
         }
-        env.ui.setCountdown(Math.max(reshuffleTime-System.currentTimeMillis()+timeLoopStarted,0), needWarning);
+        env.ui.setCountdown(Math.max(reshuffleTime-currentTime+timeLoopStarted,0), needWarning);
     }
 
     /**
