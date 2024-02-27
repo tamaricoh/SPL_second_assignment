@@ -59,7 +59,7 @@ public class Dealer implements Runnable {
         this.correctSet = false;
         this.terminate = false;
         this.reshuffleTime = env.config.turnTimeoutMillis;
-        Collections.shuffle(deck);
+        // Collections.shuffle(deck);
     }
 
     /**
@@ -242,9 +242,13 @@ public class Dealer implements Runnable {
             for (Player player : players){
                 player.removeTokens();
             }
+            while (!checkIfSet.isEmpty()) {
+                int id = checkIfSet.remove();
+                players[id].waitForDealreAnswer = true;
+            }
             checkIfSet.clear();
         }
-        Collections.shuffle(deck);
+        // Collections.shuffle(deck);
     }
 
     /**
