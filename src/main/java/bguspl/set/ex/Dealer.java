@@ -110,8 +110,13 @@ public class Dealer implements Runnable {
      */
     public void terminate() {
         System.out.println("Tamar: ________ "+"Dealer : "+" terminate()");
-        for (int i = players.length - 1; i >= 0; i--) 
+        for (int i = players.length - 1; i >= 0; i--) {
+            Thread thread = players[i].getThread();
             players[i].terminate();
+            try {
+                thread.join();
+            } catch (Exception e) {}
+        }
         terminate = true; 
     }
 
