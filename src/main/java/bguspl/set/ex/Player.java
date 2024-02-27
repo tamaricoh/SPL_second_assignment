@@ -167,8 +167,11 @@ public class Player implements Runnable {
             while (!terminate) {
                 try {
                     wait(1000);
+                    System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + "wait");
                 } catch (Exception e) {}
-                if ((queuePlayerTokens.size() < env.config.featureSize) & !terminate) {
+                if ((playerActions.size() < env.config.featureSize) & !terminate) {
+                    System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + playerActions.size() +" < "+env.config.featureSize);
+                    System.out.println("Tamar: ----- player "+ id +":  createArtificialIntelligence(): " + "ai choose card");
                     Random rand = new Random();
                     int randomSlot = rand.nextInt(env.config.tableSize);
                     keyPressed(randomSlot);
@@ -185,15 +188,6 @@ public class Player implements Runnable {
     public void terminate() {
         System.out.println("Tamar: ________ "+"Player : "+id+" terminate()");
         terminate = true;
-        /**
-         * When the user clicks the close window button, the class WindowManager that we provided you
-         * with, automatically calls Dealer::terminate method of the dealer thread, and Player::terminate
-         * method for each opened player thread. 
-         */
-        /**
-         * +2 points will be awarded for terminating all threads (that you created) gracefully and
-         * in reverse order to the order they were created in.
-         */
     }
 
     /**
@@ -204,11 +198,12 @@ public class Player implements Runnable {
     public void keyPressed(int slot) {
         System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed()");
         synchronized(playerActions){
-            synchronized(table){
+            // synchronized(table){
                 if(table.slotToCard[slot] != null){
+                    System.out.println("Tamar: ________ "+"Player : "+id+" keyPressed() "+ "add the token");
                     this.playerActions.add(slot);
                 }  
-            }
+            // }
         }
     }
 
@@ -263,7 +258,6 @@ public class Player implements Runnable {
             while(!queuePlayerTokens.isEmpty()){
                 table.removeToken(id, queuePlayerTokens.remove());
             }
-            System.out.println("remove tokens after removing from player tokents " + queuePlayerTokens.size());
             synchronized(playerActions){
                 this.playerActions.clear();
             }

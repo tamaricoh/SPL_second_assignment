@@ -139,11 +139,7 @@ public class Dealer implements Runnable {
         System.out.println("Tamar: ________ "+"Dealer : "+" removeCardsFromTable()");
         synchronized(table){
         if (correctSet){
-            System.out.println("Tamar: ----- "+"Dealer : "+" removeCardsFromTable() : "+ "inside if");
-            System.out.println("Tamar: ----- "+"Dealer : "+" removeCardsFromTable() : "+ setAttempt.size());
-            // synchronized(table){
                 while (!setAttempt.isEmpty()) {
-                    System.out.println("Tamar: ----- " + "Dealer : " + " removeCardsFromTable() : " + "inside while loop");
                     int slot = setAttempt.poll();
                     table.removeCard(slot);
                     for (Player player : players){
@@ -165,17 +161,12 @@ public class Dealer implements Runnable {
      * Check if any cards can be removed from the deck and placed on the table.
      */
     private void placeCardsOnTable() {
+        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()");
         synchronized(table){
-        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" Deck size : "+ deck.size());
         int tableSize = env.config.tableSize;
         int size = Math.min(deck.size(), tableSize);
-        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ---------------- tableSize : "+ tableSize);
-        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ---------------- size : "+ size);
         int numOfCardsOnTable = table.countCards();
-        System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  numOfCardsOnTable: "+ numOfCardsOnTable);
             for (int i = 0 ; i < size &&  numOfCardsOnTable < tableSize ; i++){
-                System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  numOfCardsOnTable: "+ numOfCardsOnTable);
-                System.out.println("Tamar: ________ "+"Dealer : "+" placeCardsOnTable()"+" ----------------  decksize: "+ deck.size());
                 int avaliableSlot = table.avaliableSlot(); // because of the condition in the loop - it will never be -1.
                 table.placeCard(deck.remove(0), avaliableSlot);
                 numOfCardsOnTable++;
@@ -199,7 +190,6 @@ public class Dealer implements Runnable {
     private void checkForSet(){
         System.out.println("Tamar: ________ "+"Dealer : "+" checkForSet()");
         if (!checkIfSet.isEmpty()) {
-            System.out.println("Tamar: -------- "+"checkForSet() : "+" enter first if");
             Integer playrerToCheckId = checkIfSet.poll();
             Player player = players[playrerToCheckId];
             int [] cards = new int [env.config.featureSize];
@@ -214,8 +204,6 @@ public class Dealer implements Runnable {
                 }
             }
             this.correctSet = env.util.testSet(cards);
-            String Tamar = correctSet? "real" : "not real";
-            System.out.println("Tamar: -------- "+"checkForSet() : "+" the set is "+Tamar);
             player.foundSet = correctSet;
             player.waitForDealreAnswer = true;
             player.dealerAnswer = true;
